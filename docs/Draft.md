@@ -4,7 +4,57 @@
 
 ---
 
-使用如下命令来创建一个 Bish 目录：
+## 配置文件
+
+Ice 的配置文件为 `Ice.toml`，其中定义了服务器相关的配置信息。最基本的，同时也是必须的选项如下：
+
+- `name`：服务器的名称，一般与目录名相同，多个词之间以 `-` 隔开。
+
+- `version`：服务器使用的游戏版本。
+
+    > Design：`version` 可以被看作是属于特定集合的字符串，不需要进行大小比较（如 convensional versioning），只需要比较相等（因为 Modrinth API 中的 version 是以列表的形式列出的）
+
+- `loader`：服务器使用的 loader，可以是 `quilt` 或 `fabric`。
+
+初始的配置文件如下：
+
+```toml
+name = "server-name"
+version = "1.20.4"
+loader = "quilt"
+```
+
+此外还有一系列可选的选项：
+
+```toml
+jvm_options = ""
+
+[properties]
+difficulty = "hard"
+enforce-secure-profile = "false"
+gamemode = "survival"
+level-seed = "20240110"
+max-player = "7"
+motd = "AzurCraft reborn"
+online-mode = "true"
+server-ip = "0.0.0.0"
+server-port = "25565"
+spawn-protection = "0"
+view-distance = "16"
+white-list = "true"
+```
+
+### `properties`
+
+通过 `properties` 可以配置服务器的 `server.properties` 中的键值。
+
+需要注意的是，值类型都应当为字符串
+
+
+
+---
+
+使用如下命令来创建一个 Ice 目录：
 
 ```
 ice new xxx
@@ -44,44 +94,7 @@ bish run
 
 ## 基本
 
-Ice 的配置文件为 `Ice.toml`，其中定义了服务器相关的配置信息。最基本的，同时也是必须的选项如下：
 
-- `name`：服务器的名称，一般与目录名相同，多个词之间以 `-` 隔开
-
-- `version`：服务器使用的版本
-- `loader`：服务器使用的 loader，可以是 `quilt` 或 `fabric`
-
-初始的配置文件如下：
-
-```toml
-name = "server-name"
-version = "1.20.4"
-loader = "quilt"
-```
-
-
-
-```toml
-jvm_options = ""
-version = "1.20.4"
-loader = "quilt"
-
-[properties]
-difficulty = "hard"
-enforce-secure-profile = "false"
-gamemode = "survival"
-level-seed = "20240110"
-max-player = "7"
-motd = "AzurCraft reborn"
-online-mode = "true"
-server-ip = "0.0.0.0"
-server-port = "25565"
-spawn-protection = "0"
-view-distance = "16"
-white-list = "true"
-```
-
-version 可以被看作是属于特定集合的字符串，不需要进行大小比较（如 convension versioning），只需要比较相等（因为 Modrinth API 中的 version 是以列表的形式列出的）
 
 
 ## Modrinth 相关

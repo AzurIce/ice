@@ -55,7 +55,7 @@ yarn build
 
 **快照槽位机制**：有10个槽位，若槽位占满，会替换掉最老的一个槽位。
 
-- **创建快照**：`#bksnap make[ <name>]`
+- **创建快照**：`#bksnap make[<name>]`
 
   可以选择输入快照名称，会将 `world` 目录以 `<ServerName> - 2022-07-19 17-11-07[ <name>]` 为名称存储到 **快照保存目录**。
 
@@ -104,12 +104,15 @@ yarn build
     For each server, the **key** should be a custom name for it.
 
   - `execOptions`
-        e.g. `-Xms4G -Xmx4G`.
+    
+    e.g. `-Xms4G -Xmx4G`.
+    
   - `execPath`
-        The path to the `.jar` file of your server.
-        >
-        > - When doing bacnup jobs, MCSH will use the dir of this path to locate `world/` folder.
-        > - Server will be using command `java execOptions -jar execPath --nogui` to start.
+    
+    The path to the `.jar` file of your server.
+    
+    > - When doing bacnup jobs, MCSH will use the dir of this path to locate `world/` folder.
+    > - Server will be using command `java execOptions -jar execPath --nogui` to start.
 
 ### IO for each server
 
