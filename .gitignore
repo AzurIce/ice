@@ -1,0 +1,14 @@
+.idea/
+Backups/
+statik/
+.builds/
+*.db
+*.log
+.vscode/
+.github/
+/config.yml
+quilt-installer*
+target
+.direnv
+
+test-server

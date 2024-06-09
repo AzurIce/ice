@@ -1,0 +1,5 @@
+[workspace]
+members = ["ice-cli", "ice-core"]
+
+[workspace.dependencies]
+ice-core = { path = "./ice-core" }

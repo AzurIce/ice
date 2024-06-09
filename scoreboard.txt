@@ -1,0 +1,32 @@
+scoreboard objectives add DeathCount DeathCount
+scoreboard objectives setdisplay DeathCount list
+
+scoreboard objectives add WoodenPickaxe minecraft.used:minecraft.wooden_pickaxe
+scoreboard objectives add WoodenAxe minecraft.used:minecraft.wooden_axe
+scoreboard objectives add WoodenShovel minecraft.used:minecraft.wooden_shovel
+scoreboard objectives add WoodenHoe minecraft.used:minecraft.wooden_hoe
+
+scoreboard objectives add StonePickaxe minecraft.used:minecraft.stone_pickaxe
+scoreboard objectives add StoneAxe minecraft.used:minecraft.stone_axe
+scoreboard objectives add StoneShovel minecraft.used:minecraft.stone_shovel
+scoreboard objectives add StoneHoe minecraft.used:minecraft.stone_hoe
+
+scoreboard objectives add IronPickaxe minecraft.used:minecraft.iron_pickaxe
+scoreboard objectives add IronAxe minecraft.used:minecraft.iron_axe
+scoreboard objectives add IronShovel minecraft.used:minecraft.iron_shovel
+scoreboard objectives add IronHoe minecraft.used:minecraft.iron_hoe
+
+scoreboard objectives add GoldenPickaxe minecraft.used:minecraft.golden_pickaxe
+scoreboard objectives add GoldenAxe minecraft.used:minecraft.golden_axe
+scoreboard objectives add GoldenShovel minecraft.used:minecraft.golden_shovel
+scoreboard objectives add GoldenHoe minecraft.used:minecraft.golden_hoe
+
+scoreboard objectives add DiamondPickaxe minecraft.used:minecraft.diamond_pickaxe
+scoreboard objectives add DiamondAxe minecraft.used:minecraft.diamond_axe
+scoreboard objectives add DiamondShovel minecraft.used:minecraft.diamond_shovel
+scoreboard objectives add DiamondHoe minecraft.used:minecraft.diamond_hoe
+
+scoreboard objectives add NetheritePickaxe minecraft.used:minecraft.netherite_pickaxe
+scoreboard objectives add NetheriteAxe minecraft.used:minecraft.netherite_axe
+scoreboard objectives add NetheriteShovel minecraft.used:minecraft.netherite_shovel
+scoreboard objectives add NetheriteHoe minecraft.used:minecraft.netherite_hoe
