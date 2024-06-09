@@ -1,16 +1,22 @@
+希望能够使用 “声明式” 的方式来定义一个服务器。
+
+在设想中，未来人们只需要拿到同一份 `Ice.toml` 就可以跑起来一个相同的服务器。
+
+---
+
 使用如下命令来创建一个 Bish 目录：
 
 ```
-bish new xxx
+ice new xxx
 ```
 
-或者在一个目录下使用以下命令来将其初始化为 Bish 目录：
+或者在一个目录下使用以下命令来将其初始化为 Ice 目录：
 
 ```
-bish init xxx
+ice init xxx
 ```
 
-Bish 目录结构如下：
+ice 目录结构如下：
 
 ```
 my-server/
@@ -20,7 +26,7 @@ my-server/
     │    ├─snapshots/
     │    └─archives/
     ├─files/
-    └─Bish.toml
+    └─Ice.toml
 ```
 
 - `server/` Minecraft 服务器的根目录
@@ -38,7 +44,7 @@ bish run
 
 ## 基本
 
-Bish 的配置文件为 `Bish.toml`，其中定义了服务器相关的配置信息。最基本的，同时也是必须的选项如下：
+Ice 的配置文件为 `Ice.toml`，其中定义了服务器相关的配置信息。最基本的，同时也是必须的选项如下：
 
 - `name`：服务器的名称，一般与目录名相同，多个词之间以 `-` 隔开
 
@@ -75,6 +81,7 @@ view-distance = "16"
 white-list = "true"
 ```
 
+version 可以被看作是属于特定集合的字符串，不需要进行大小比较（如 convension versioning），只需要比较相等（因为 Modrinth API 中的 version 是以列表的形式列出的）
 
 
 ## Modrinth 相关

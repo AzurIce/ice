@@ -1,8 +1,8 @@
 # Ice
 
-A Minecraft Server Helper
+A minecraft server helper, the successor of [AzurIce/ACH (github.com)](https://github.com/AzurIce/ACH)
 
-重构ing...
+Doing entirely reconstruct...
 
 ---
 
