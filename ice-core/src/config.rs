@@ -9,7 +9,7 @@ mod test {
 
     #[test]
     fn test_default() {
-        let config = BishConfig::default();
+        let config = IceConfig::default();
         let str = toml::to_string_pretty(&config).expect("");
         println!("{}", str)
     }
@@ -24,7 +24,7 @@ mod test {
 
 #[derive(Serialize, Deserialize, Debug, Derivative, Clone)]
 #[derivative(Default)]
-pub struct BishConfig {
+pub struct IceConfig {
     #[derivative(Default(value = r##"String::from("#")"##))]
     pub command_prefix: String,
     #[derivative(Default(value = r##"String::from("./backups")"##))]
@@ -47,12 +47,12 @@ pub enum ModInfo {
     SpecificVersion { version_id: String },
 }
 
-pub fn load_config() -> Result<BishConfig, Box<dyn Error>> {
+pub fn load_config() -> Result<IceConfig, Box<dyn Error>> {
     println!("[load_config]: reading config...");
     let config = fs::read_to_string("./config.toml").or_else(|err| {
         if let io::ErrorKind::NotFound = err.kind() {
             println!("[load_config]: config.toml not found, writing default config...");
-            let default_config = BishConfig::default();
+            let default_config = IceConfig::default();
             let default_config = toml::to_string_pretty(&default_config).unwrap();
             fs::write("./config.toml", &default_config).unwrap();
             Ok(default_config)
@@ -61,7 +61,7 @@ pub fn load_config() -> Result<BishConfig, Box<dyn Error>> {
         }
     })?;
     println!("[load_config]: parsing config...");
-    let config = toml::from_str::<BishConfig>(&config)?;
+    let config = toml::from_str::<IceConfig>(&config)?;
     println!("{:#?}", config);
 
     Ok(config)

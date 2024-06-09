@@ -9,18 +9,18 @@ use std::{
 
 use log::info;
 
-use crate::{config::BishConfig, core::server::Server, utils::regex::forward_regex};
+use crate::{config::IceConfig, core::server::Server, utils::regex::forward_regex};
 
 use self::server::run;
 
 pub struct Core {
-    pub config: BishConfig,
+    pub config: IceConfig,
     pub servers: Arc<Mutex<HashMap<String, Arc<Mutex<Server>>>>>,
     output_tx: mpsc::Sender<String>,
 }
 
 impl Core {
-    pub fn init(config: BishConfig) -> Self {
+    pub fn init(config: IceConfig) -> Self {
         let mut servers = HashMap::<String, Arc<Mutex<Server>>>::new();
         for (name, config) in &config.servers {
             servers.insert(name.clone(), Server::init(name.clone(), config.clone()));
