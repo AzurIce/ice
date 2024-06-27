@@ -1,5 +1,3 @@
-#![feature(fs_try_exists)]
-
 mod cli;
 use clap::Parser;
 use cli::Cli;

@@ -70,7 +70,7 @@ impl Cli {
 
                 info!("checking server...");
                 let server_dir = dir.join("server");
-                if !fs::try_exists(&server_dir).expect("failed to try exist on server") {
+                if !server_dir.exists() {
                     info!("server not exist, installing...");
                     ice_config
                         .loader
@@ -79,8 +79,7 @@ impl Cli {
                 }
 
                 info!("checking properties...");
-                if fs::try_exists(&server_dir.join("server.properties"))
-                    .expect("failed to try exist on server")
+                if server_dir.join("server.properties").exists()
                 {
                     info!("patching properties...");
                     let property_file = server_dir.join("server.properties");
