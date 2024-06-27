@@ -1,9 +1,10 @@
 [package]
 name = "ice-cli"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "ice"
 
 [dependencies]
 ice-core.workspace = true

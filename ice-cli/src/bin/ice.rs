@@ -1,6 +1,6 @@
 #![feature(fs_try_exists)]
-mod cli;
 
+mod cli;
 use clap::Parser;
 use cli::Cli;
 
