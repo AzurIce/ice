@@ -8,13 +8,22 @@ use ice_cli::{
 pub fn download_mod<S: AsRef<str>>(slug: S, version_number: S, loader: Loader, mod_dir: PathBuf) {
     let slug = slug.as_ref();
     let version_number = version_number.as_ref();
-    println!("downloading mod {slug} = {version_number}...");
+    print!("downloading mod {slug} = [{loader:?}] {version_number}...");
 
     let versions = get_project_versions(&slug);
-    match versions
-        .iter()
-        .find(|v| v.version_number == version_number && v.loaders.contains(&loader))
-    {
+    match versions.iter().find(|v| {
+        // println!(
+        //     "{:?}:{} {:?}:{}",
+        //     v.version_number,
+        //     v.version_number == version_number,
+        //     v.loaders,
+        //     v.loaders.contains(&loader)
+        //         || loader == Loader::Quilt && v.loaders.contains(&Loader::Fabric)
+        // );
+        v.version_number == version_number
+            && (v.loaders.contains(&loader)
+                || loader == Loader::Quilt && v.loaders.contains(&Loader::Fabric))
+    }) {
         Some(version) => {
             if version.files.len() > 1 {
                 println!("has multiple files: {:?}, skipping...", version.files);
@@ -25,15 +34,15 @@ pub fn download_mod<S: AsRef<str>>(slug: S, version_number: S, loader: Loader, m
 
             if !local_path.exists() {
                 match download(&version_file.url, local_path) {
-                    Ok(_) => println!("downloaded {slug} = {version_number}"),
-                    Err(err) => println!("failed to download {slug} = {version_number}: {err}"),
+                    Ok(_) => println!("finished"),
+                    Err(err) => println!("failed: {err}, skipping..."),
                 }
             } else {
-                println!("{slug} = {version_number} already exists, skipping...");
+                println!("already exists, skipping...");
             }
         }
         None => {
-            println!("version not found for {slug} = {version_number}, skipping...");
+            println!("version not found, skipping...");
         }
     }
 }
