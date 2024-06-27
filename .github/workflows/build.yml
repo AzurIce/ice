@@ -1,0 +1,59 @@
+name: Release
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - v*
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          # (optional) Path to changelog.
+          changelog: CHANGELOG.md
+          # (required) GitHub token for creating GitHub Releases.
+          token: ${{ secrets.GITHUB_TOKEN }}
+  upload-assets:
+      strategy:
+        fail-fast: false
+        matrix:
+          os:
+            - ubuntu-latest
+            - macos-latest
+            - windows-latest
+      runs-on: ${{ matrix.os }}
+      steps:
+        - name: install dependencies (ubuntu only)
+          if: matrix.os == 'ubuntu-latest'
+          run: |
+            sudo apt-get update
+            # sudo apt-get install \
+            #   build-essential \
+            #   git \
+            #   pkg-config \
+            #   libdbus-1-dev \
+            #   libudev-dev \
+            #   libxkbcommon-dev \
+            #   libfontconfig1-dev \
+            #   libgtk-3-dev \
+            #   libwebkit2gtk-4.0-dev \
+            #   libssl-dev \
+            #   libayatana-appindicator3-dev \
+            #   librsvg2-dev \
+            #   librust-atk-dev \
+            #   libatk1.0-dev
+        
+        - uses: actions/checkout@v4
+        - uses: taiki-e/upload-rust-binary-action@v1
+          with:
+            # (required) Comma-separated list of binary names (non-extension portion of filename) to build and upload.
+            # Note that glob pattern is not supported yet.
+            bin: ice
+            token: ${{ secrets.GITHUB_TOKEN }}
