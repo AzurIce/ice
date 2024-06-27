@@ -4,6 +4,15 @@ A minecraft server helper, the successor of [AzurIce/ACH (github.com)](https://g
 
 Doing entirely reconstruct...
 
+## Install
+
+### Scoop
+
+```
+scoop bucket add ice https://github.com/azurice/ice
+scoop install ice/ice
+```
+
 ---
 
 # ACH
