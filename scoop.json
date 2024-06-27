@@ -1,0 +1,6 @@
+{
+    "version": "0.1.0-alpha.1",
+    "url": "https://github.com/AzurIce/ice",
+    "extract_dir": "ice",
+    "bin": "ice.exe"
+}
