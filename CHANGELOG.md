@@ -2,13 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.0-alpha.2](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/compare/v0.1.0-alpha.1..0.1.0-alpha.2) - 2024-06-27
+## [0.1.0-alpha.3](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/compare/v0.1.0-alpha.2..v0.1.0-alpha.3) - 2024-06-27
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Allow Quilt loader download Fabric mod - ([cc11832](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/cc118328f511bfee0644add9450ddfb3347d97db))
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+
+
+- *(scoop)* Move scoop.json to ice.json - ([cb09efa](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/cb09efa02b077cf5355b1658568abc37b3ffd007))
+- *(scoop)* Update ice.json - ([a5a432d](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/a5a432d221f436370750b1e94ead7a23895d6efa))
+
+## [0.1.0-alpha.2](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/compare/v0.1.0-alpha.1..v0.1.0-alpha.2) - 2024-06-27
 
 ### <!-- 1 -->🕷️ Bug Fixes
 
 
 - Versions may have same version number with different loader - ([feb0172](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/feb01721942e473b27f297ec1affdfb39be94e72))
 - Added support of deserializing loader field with `neoforge` value from modrinth data - ([f350ac6](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/f350ac6401bc7be9438c1f545037fcce1a2b2d2d))
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+
+
+- *(release)* V0.1.0-alpha.2 - ([8881bff](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/8881bff8ee1b64b993d0a94d91526a78d751f66b))
 
 ## [0.1.0-alpha.1] - 2024-06-27
 
