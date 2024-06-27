@@ -24,6 +24,7 @@ pub enum Loader {
     Quilt,
     Fabric,
     Forge,
+    NeoForge,
 }
 
 impl Loader {
