@@ -61,7 +61,7 @@ impl Cli {
 
                 for (mod_name, version_number) in &ice_config.mods {
                     info!("downloading mod [{}]...", mod_name);
-                    modrinth::download_mod(mod_name, version_number, dir.join("mods"));
+                    modrinth::download_mod(mod_name, version_number, ice_config.loader, dir.join("mods"));
                 }
             }
             Cli::Run => {
