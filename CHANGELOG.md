@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.2](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/compare/v0.1.0-alpha.1..0.1.0-alpha.2) - 2024-06-27
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Versions may have same version number with different loader - ([feb0172](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/feb01721942e473b27f297ec1affdfb39be94e72))
+- Added support of deserializing loader field with `neoforge` value from modrinth data - ([f350ac6](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/f350ac6401bc7be9438c1f545037fcce1a2b2d2d))
+
 ## [0.1.0-alpha.1] - 2024-06-27
 
 ### <!-- 0 -->🎈 Features
