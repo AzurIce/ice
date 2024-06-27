@@ -86,7 +86,7 @@ protect_breaking_commits = false
 # filter out the commits that are not matched by commit parsers
 filter_commits = false
 # regex for matching git tags
-tag_pattern = "v*.*"
+tag_pattern = "v.*"
 
 # regex for skipping tags
 skip_tags = "beta|alpha"
