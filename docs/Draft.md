@@ -108,6 +108,8 @@ A[配置文件中的 slug]
 
 ### config
 
+`<project-slug> = <version_number>`
+
 ```
 [mods]
 fabric-api = "0.94.0+1.20.4"

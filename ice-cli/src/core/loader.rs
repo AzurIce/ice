@@ -1,7 +1,7 @@
-use std::{error::Error, path::Path, process::Command, fs, io::Write};
+use std::{error::Error, fs, io::Write, path::Path, process::Command};
 
-use ice_core::utils::download;
 use clap::ValueEnum;
+use ice_core::utils::download;
 use log::info;
 use serde::{Deserialize, Serialize};
 
@@ -19,9 +19,11 @@ mod test {
 }
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+#[serde(rename_all = "lowercase")]
 pub enum Loader {
-    // Fabric,
     Quilt,
+    Fabric,
+    Forge,
 }
 
 impl Loader {
@@ -41,29 +43,35 @@ impl Loader {
                     .split("/")
                     .last()
                     .unwrap_or("quilt-installer");
-                let path = Path::new(".bish").join(filename);
+                let path = Path::new(".ice").join(filename);
                 info!("downloading {filename} from {url} to {path:?}...");
                 download(url.as_str(), &path)?;
 
                 info!("installing server");
-                let success = Command::new("java").args([
-                    "-jar",
-                    path.as_os_str().to_str().unwrap(),
-                    "install",
-                    "server",
-                    version,
-                    "--download-server",
-                ]).status()?.success();
+                let success = Command::new("java")
+                    .args([
+                        "-jar",
+                        path.as_os_str().to_str().unwrap(),
+                        "install",
+                        "server",
+                        version,
+                        "--download-server",
+                    ])
+                    .status()?
+                    .success();
                 if !success {
                     panic!("failed to install server")
                 }
 
                 // 写入 eula=true 到 eula.txt
-                let mut eula_file = fs::File::create("eula.txt")
-                    .expect("failed to create eula file");
+                let mut eula_file =
+                    fs::File::create("eula.txt").expect("failed to create eula file");
                 eula_file
                     .write_all("eula=true".as_bytes())
                     .expect("failed to write into eula file");
+            }
+            _ => {
+                println!("not implemented")
             }
         }
         Ok(())

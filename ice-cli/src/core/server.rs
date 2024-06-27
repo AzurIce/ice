@@ -22,6 +22,7 @@ impl Server {
         info!("Server::start");
         let jar_filename = match config.loader {
             Loader::Quilt => "quilt-server-launch.jar",
+            _ => panic!("not implemented"),
         };
         let mut command = Command::new("java");
         let mut args = vec!["-jar", jar_filename, "--nogui"];

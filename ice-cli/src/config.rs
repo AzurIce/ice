@@ -29,14 +29,14 @@ pub struct Config {
     #[serde(default)]
     pub properties: HashMap<String, String>,
     #[serde(default)]
-    pub mods: HashMap<String, ModInfo>
+    pub mods: HashMap<String, String> // slug -> version_number
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(untagged)]
-pub enum ModInfo {
-    SpecificVersion { version_id: String },
-}
+// #[derive(Serialize, Deserialize, Debug, Clone)]
+// #[serde(untagged)]
+// pub enum ModInfo {
+//     SpecificVersion { version_id: String },
+// }
 
 impl Config {
     pub fn new(name: String, version: String, loader: Loader) -> Self {
