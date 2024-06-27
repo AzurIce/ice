@@ -3,6 +3,7 @@ use std::{path::Path, error::Error, io::Write};
 use curl::easy::Easy;
 use log::info;
 
+pub mod modrinth;
 pub mod config;
 pub mod error;
 pub mod core;

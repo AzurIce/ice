@@ -8,7 +8,6 @@ use crate::config::Config;
 use self::server::Server;
 
 pub mod server;
-pub mod modrinth;
 pub mod loader;
 pub mod command;
 

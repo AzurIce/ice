@@ -1,18 +1,20 @@
+mod mod_sync;
+
+use mod_sync::*;
+
 use std::{
     env,
     fs::{self, create_dir},
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 use clap::Parser;
 use ice_cli::{
-    config::{self, Config},
-    core::{loader::Loader, modrinth::get_project_versions, Core},
+    config::Config,
+    core::{loader::Loader, Core},
 };
 use log::{info, warn};
 use regex::Regex;
-
-pub mod modrinth;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -55,15 +57,7 @@ impl Cli {
             Cli::Init { version, loader } => {
                 init_dir(dir, version, loader);
             }
-            Cli::ModSync => {
-                info!("loading config...");
-                let ice_config = Config::load(dir.join("Ice.toml")).unwrap();
-
-                for (mod_name, version_number) in &ice_config.mods {
-                    info!("downloading mod [{}]...", mod_name);
-                    modrinth::download_mod(mod_name, version_number, ice_config.loader, dir.join("mods"));
-                }
-            }
+            Cli::ModSync => mod_sync_blocking(dir),
             Cli::Run => {
                 info!("loading config...");
                 let ice_config = Config::load(dir.join("Ice.toml")).unwrap();
@@ -79,8 +73,7 @@ impl Cli {
                 }
 
                 info!("checking properties...");
-                if server_dir.join("server.properties").exists()
-                {
+                if server_dir.join("server.properties").exists() {
                     info!("patching properties...");
                     let property_file = server_dir.join("server.properties");
                     let mut buf = fs::read_to_string(&property_file)
@@ -121,11 +114,11 @@ pub fn init_dir(dir: PathBuf, version: Option<String>, loader: Loader) {
     // TODO: verify version
 
     info!("writing config...");
-    let bish_config = Config::new(name.to_string(), version, loader);
-    let bish_config = toml::to_string_pretty(&bish_config).expect("toml err");
-    let bish_config_path = &dir.join("Ice.toml");
-    fs::write(&bish_config_path, bish_config)
-        .expect(format!("failed to write to [{:?}]", bish_config_path).as_str());
+    let ice_config = Config::new(name.to_string(), version, loader);
+    let ice_config = toml::to_string_pretty(&ice_config).expect("toml err");
+    let ice_config_path = &dir.join("Ice.toml");
+    fs::write(&ice_config_path, ice_config)
+        .expect(format!("failed to write to [{:?}]", ice_config_path).as_str());
 
     info!("initializing dir...");
     // fs::create_dir(dir.join("server")).expect("failed to create directory");
@@ -133,5 +126,5 @@ pub fn init_dir(dir: PathBuf, version: Option<String>, loader: Loader) {
     fs::create_dir_all(dir.join("backups/snapshots")).expect("failed to create directory");
     fs::create_dir_all(dir.join("backups/archives")).expect("failed to create directory");
     fs::create_dir(dir.join("files")).expect("failed to create directory");
-    info!("done!")
+    info!("done!");
 }
