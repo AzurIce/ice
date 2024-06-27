@@ -1,5 +1,15 @@
 # Draft
 
+## CHANGELOG & GitHub Action
+
+- update `Cargo.toml`
+- update `ice.json`
+- update `CHANGELOG.md` with `git cliff update --tag xxx -o CHANGELOG.md`
+- commit `chore(release): prepare for xxx`
+- create git tag
+- push all
+
+
 <!-- 专注于支持 Fabric/Quilt 服务端 -->
 
 <!-- `fabric-server-launch.jar` -->
