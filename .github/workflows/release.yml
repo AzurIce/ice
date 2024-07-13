@@ -60,12 +60,6 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
-      - name: Initialize version
-        shell: bash
-        run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          fi
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -108,7 +102,7 @@ jobs:
       
       - uses: actions/upload-artifact@v4
         with:
-          name: bin-${{ env.version }}-${{ matrix.build }}
+          name: bin-${{ matrix.build }}
           path: dist
   release:
     name: Release
