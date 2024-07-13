@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use ice_cli::{
+use ice::{
     core::{loader::Loader, modrinth::get_project_versions},
     download,
 };

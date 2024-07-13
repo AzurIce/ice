@@ -1,13 +1,13 @@
 use std::{
     env,
     fs::{self, create_dir},
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 use clap::Parser;
-use ice_cli::{
-    config::{self, Config},
-    core::{loader::Loader, modrinth::get_project_versions, Core},
+use ice::{
+    config::Config,
+    core::{loader::Loader, Core},
 };
 use log::{info, warn};
 use regex::Regex;
@@ -35,6 +35,10 @@ pub enum Cli {
     },
     Run,
     ModSync,
+}
+
+pub enum Command {
+
 }
 
 impl Cli {
