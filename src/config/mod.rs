@@ -1,22 +1,8 @@
+pub mod mod_config;
+
 use std::{fs, path::Path, collections::HashMap};
-
 use serde::{Serialize, Deserialize};
-
 use crate::core::loader::Loader;
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_new_config() {
-        let config = Config::new("name".to_string(), "version".to_string(), Loader::Quilt);
-        let toml = toml::to_string(&config).unwrap();
-        println!("{toml}");
-        let toml = toml::to_string_pretty(&config).unwrap();
-        println!("{toml}");
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
@@ -48,5 +34,19 @@ impl Config {
         let config = toml::from_str::<Config>(&config).map_err(|err| format!("failed to parse config: {:?}", err))?;
         // TODO: check server version
         Ok(config)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_new_config() {
+        let config = Config::new("name".to_string(), "version".to_string(), Loader::Quilt);
+        let toml = toml::to_string(&config).unwrap();
+        println!("{toml}");
+        let toml = toml::to_string_pretty(&config).unwrap();
+        println!("{toml}");
     }
 }

@@ -6,6 +6,7 @@ use log::info;
 pub mod config;
 pub mod error;
 pub mod core;
+pub mod utils;
 
 pub fn download<P: AsRef<Path>>(url: &str, path: P) -> Result<(), Box<dyn Error>> {
     let path = path.as_ref();

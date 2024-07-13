@@ -1,10 +1,11 @@
 use std::path::PathBuf;
 
-use ice::{
+use crate::{
     core::{loader::Loader, modrinth::get_project_versions},
     download,
 };
 
+/// Download mod from modrinth to `mod_dir` by `slug`, `version_number` and `loader`
 pub fn download_mod<S: AsRef<str>>(slug: S, version_number: S, loader: Loader, mod_dir: PathBuf) {
     let slug = slug.as_ref();
     let version_number = version_number.as_ref();

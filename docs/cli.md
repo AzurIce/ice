@@ -1,9 +1,13 @@
 ## v0
 
-- `mod`：在当前目录结合 `mods.toml` 对 mod 进行管理
-- `server`：在当前目录结合 `ice.toml` 对服务器进行管理
+有多个子命令：
 
+- `mod`：结合 `mods.toml` 对 mod 进行管理
+- `server`：结合 `ice.toml` 对服务器进行管理
 
+### mod
+
+- `ice mod sync`：将 mods 目录下的 mod 与 `mods.toml` 同步
 
 
 
