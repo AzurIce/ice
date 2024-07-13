@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.3](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.2..0.1.0-alpha.3) - 2024-07-13
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+
+
+- *(ci)* Fix artifact name - ([4cae49d](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/4cae49d6bb14b40bad58b1ed198cfc1a7c2816ad))
+- Added push to justfile - ([d37c46e](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/d37c46e9f5025dd4a25333f9e9a5d47afbfce10f))
+
 ## [0.1.0-alpha.2](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.1..0.1.0-alpha.2) - 2024-07-13
 
 ### <!-- 2 --> Refactor
