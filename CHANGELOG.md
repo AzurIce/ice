@@ -2,47 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.0-alpha.3](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/compare/v0.1.0-alpha.2..v0.1.0-alpha.3) - 2024-06-27
-
-### <!-- 1 -->🕷️ Bug Fixes
-
-
-- Allow Quilt loader download Fabric mod - ([cc11832](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/cc118328f511bfee0644add9450ddfb3347d97db))
-
-### <!-- 7 -->⚙️ Miscellaneous Tasks
-
-
-- *(scoop)* Move scoop.json to ice.json - ([cb09efa](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/cb09efa02b077cf5355b1658568abc37b3ffd007))
-- *(scoop)* Update ice.json - ([a5a432d](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/a5a432d221f436370750b1e94ead7a23895d6efa))
-
-## [0.1.0-alpha.2](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/compare/v0.1.0-alpha.1..v0.1.0-alpha.2) - 2024-06-27
-
-### <!-- 1 -->🕷️ Bug Fixes
-
-
-- Versions may have same version number with different loader - ([feb0172](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/feb01721942e473b27f297ec1affdfb39be94e72))
-- Added support of deserializing loader field with `neoforge` value from modrinth data - ([f350ac6](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/f350ac6401bc7be9438c1f545037fcce1a2b2d2d))
-
-### <!-- 7 -->⚙️ Miscellaneous Tasks
-
-
-- *(release)* V0.1.0-alpha.2 - ([8881bff](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/8881bff8ee1b64b993d0a94d91526a78d751f66b))
-
-## [0.1.0-alpha.1] - 2024-06-27
+## [0.1.0-alpha.1] - 2024-07-13
 
 ### <!-- 0 -->🎈 Features
 
 
-- Simple mod downloading - ([bd5385c](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/bd5385c4f959b635adeb47e98e90e8f5c02e605f))
+- Simple mod downloading - ([bd5385c](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/bd5385c4f959b635adeb47e98e90e8f5c02e605f))
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Versions may have same version number with different loader - ([feb0172](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/feb01721942e473b27f297ec1affdfb39be94e72))
+- Added support of deserializing loader field with `neoforge` value from modrinth data - ([f350ac6](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/f350ac6401bc7be9438c1f545037fcce1a2b2d2d))
+- Allow Quilt loader download Fabric mod - ([cc11832](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/cc118328f511bfee0644add9450ddfb3347d97db))
+
+### <!-- 2 --> Refactor
+
+
+- Project structure and ci - ([e4eb132](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/e4eb132e1087bcec5ee363de1dcfb549a988ab5b))
 
 ### <!-- 7 -->⚙️ Miscellaneous Tasks
 
 
-- *(dep)* Update dependencies - ([b57a3eb](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/b57a3ebfbac2d1ea2d03d47fa618751d53db1b0c))
-- Added cliff for CHANGELOG - ([a45719b](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/a45719b753daaf6a4de30db7cf88307158ef1fe1))
-- Added github action script - ([0e18e76](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/0e18e7699dbd8ee2d77884960d538eeb2b33cc88))
-- Created scoop.json - ([f2e74cc](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/f2e74cc810690f4915739fb96d5883e9a9a9e474))
-- Update cliff config - ([264e358](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/264e358283c486612ef8c8e64c9d7af76103e3df))
-- Update cliff.toml - ([ab398c0](https://github.com/BJTUEventCameraSoftwareGroup/demo-iced/commit/ab398c0b4fdd7f7f4bab265132f5be3771697fd3))
+- *(ci)* Update ci - ([e4f6c83](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/e4f6c830bbe730918a1ee8306173a50bb3bf3a56))
+- *(ci)* Fix tags regex, and added prerelease - ([7fdc1d7](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/7fdc1d7962d93939b2cb459bd115f5880409d820))
+- *(ci)* Fix trigger - ([ae24914](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/ae2491418310e27b4c55caf2d84783a7ed8c9274))
+- *(dep)* Update dependencies - ([b57a3eb](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/b57a3ebfbac2d1ea2d03d47fa618751d53db1b0c))
+- *(release)* V0.1.0-alpha.2 - ([8881bff](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/8881bff8ee1b64b993d0a94d91526a78d751f66b))
+- *(release)* Fix echo in justfile - ([9098214](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/9098214ae572a9fe733fdefeb1a5fda61ad87902))
+- *(scoop)* Move scoop.json to ice.json - ([cb09efa](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/cb09efa02b077cf5355b1658568abc37b3ffd007))
+- *(scoop)* Update ice.json - ([a5a432d](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/a5a432d221f436370750b1e94ead7a23895d6efa))
+- Added cliff for CHANGELOG - ([a45719b](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/a45719b753daaf6a4de30db7cf88307158ef1fe1))
+- Added github action script - ([0e18e76](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/0e18e7699dbd8ee2d77884960d538eeb2b33cc88))
+- Created scoop.json - ([f2e74cc](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/f2e74cc810690f4915739fb96d5883e9a9a9e474))
+- Update cliff config - ([264e358](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/264e358283c486612ef8c8e64c9d7af76103e3df))
+- Update cliff.toml - ([ab398c0](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/ab398c0b4fdd7f7f4bab265132f5be3771697fd3))
+- Create git tag using justfile - ([8f87bd4](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/8f87bd44a6ba5853ced67aaf8c4b7ecfb9c1cd86))
 
 <!-- generated by git-cliff -->
