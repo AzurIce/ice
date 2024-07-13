@@ -44,9 +44,13 @@ Options:
 To use it, you should make sure you are in the `mods` folder.
 
 - `ice mod init`: create a `mods.toml` file
+
   You can specify the game version and the loader using `-v` and `-l`, learn more from `ice mod init -h`
+
 - `ice mod sync`: sync the mods under the current directory with `mods.toml`.
+
   Currently, what it done is just download mods specified in `mods.toml`
+
 - `ice mod update`: WIP
 
 ### server
