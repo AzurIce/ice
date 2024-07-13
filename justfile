@@ -16,4 +16,4 @@ tag tag:
     cargo check
     git add CHANGELOG.md Cargo.toml Cargo.lock ice.json
     git commit -m "chore(release): prepare for {{tag}}"
-
+    git tag -a {{tag}} -m "release v{{tag}}"
