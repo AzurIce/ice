@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - '[0-9]+.[0-9]+.[0-9]a+(-alpha|-beta)?'
+      - '[0-9]+.[0-9]+.[0-9]+((-alpha|-beta)\.[0-9]+)?'
     branches: ["ci/release-*"]
   # to test the workflow
   pull_request:
@@ -18,7 +18,7 @@ env:
   # a release, allowing for manual inspection of the output. This mode is
   # activated if the CI run was triggered by events other than pushed tags
   preview: ${{ !startsWith(github.ref, 'refs/tags/') }}
-  pre-release: ${{ !endsWith(github.ref, 'alpha|beta') }}
+  pre-release: ${{ !endsWith(github.ref, '(-alpha|-beta)\.[0-9]+') }}
   version: dev
 
 jobs:
@@ -164,6 +164,7 @@ jobs:
           file_glob: true
           tag: ${{ github.ref_name }}
           release_name: "Release v${{ env.version }}"
+          prerelease: ${{ env.pre-release }}
           body: "${{ needs.changelog.outputs.release_body }}"
           overwrite: true
       - name: Upload binaries as artifact
