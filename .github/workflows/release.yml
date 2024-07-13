@@ -94,7 +94,7 @@ jobs:
       #       libatk1.0-dev
       
       - name: Build binaries
-        run: cargo build --release --locked -p  --target ${{ matrix.target }}
+        run: cargo build --release --locked -p ice --target ${{ matrix.target }}
       
       - name: Copy binaries
         shell: bash
@@ -133,17 +133,17 @@ jobs:
 
           source="$(pwd)"
           cd "$(mktemp -d)"
+          mv $source/bin-* .
           mkdir dist
 
-          for dir in bins-* ; do
-              platform=${dir#"bins-"}
+          for dir in bin-* ; do
+              platform=${dir#"bin-"}
               if [[ $platform =~ "windows" ]]; then
                   exe=".exe"
               fi
-              pkgname=ice-$GITHUB_REF_NAME-$platform
+              pkgname=ice-${{ env.version }}-$platform
               mkdir -p $pkgname
-              cp $source/LICENSE $source/README.md $pkgname
-              mv bins-$platform/ice$exe $pkgname
+              mv bin-$platform/ice$exe $pkgname
               chmod +x $pkgname/ice$exe
 
               if [ "$exe" = "" ]; then
@@ -154,11 +154,6 @@ jobs:
           done
 
           mv dist $source/
-
-      - name: Copy binaries
-        run: |
-          mkdir -p dist
-          cp -r bin-*/* dist/
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
