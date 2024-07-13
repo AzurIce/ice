@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.2](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.1..0.1.0-alpha.2) - 2024-07-13
+
+### <!-- 2 --> Refactor
+
+
+- New interface, mod init and mod sync - ([e4ba646](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/e4ba646ba130a1ed187e47a3734f7db327e5525c))
+
 ## [0.1.0-alpha.1] - 2024-07-13
 
 ### <!-- 0 -->🎈 Features
