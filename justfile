@@ -12,11 +12,8 @@ tag tag:
     # replace the version in Cargo.toml
     sed -i "s/^version = .*/version = \"{{tag}}\"/" Cargo.toml
     # generate ice.json for scoop menifest
-    echo '{
-    "version": "{{tag}}",
-    "url": "https://github.com/AzurIce/ice/releases/download/{{tag}}/ice-{{tag}}-x86_64-windows.zip",
-    "bin": "ice.exe"
-}' > ice.json
-    git add CHANGELOG.md Cargo.toml ice.json
+    echo -e '{\n"version": "{{tag}}",\n"url": "https://github.com/AzurIce/ice/releases/download/{{tag}}/ice-{{tag}}-x86_64-windows.zip",\n"bin": "ice.exe"\n}' > ice.json
+    cargo check
+    git add CHANGELOG.md Cargo.toml Cargo.lock ice.json
     git commit -m "chore(release): prepare for {{tag}}"
 
