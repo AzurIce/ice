@@ -101,11 +101,11 @@ jobs:
         run: |
           mkdir -p dist
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            cp "target/${{ matrix.target }}/release/evt-app.exe" "dist/evt-app-${{ env.version }}-${{ matrix.build }}.exe"
+            cp "target/${{ matrix.target }}/release/ice.exe" "dist/ice.exe"
           else
-            cp "target/${{ matrix.target }}/release/evt-app" "dist/evt-app-${{ env.version }}-${{ matrix.build }}"
+            cp "target/${{ matrix.target }}/release/ice" "dist/ice"
           fi
-
+      
       - uses: actions/upload-artifact@v4
         with:
           name: bin-${{ env.version }}-${{ matrix.build }}
@@ -125,6 +125,35 @@ jobs:
           fi
 
       - uses: actions/download-artifact@v4
+      
+      - name: Build archive
+        shell: bash
+        run: |
+          set -ex
+
+          source="$(pwd)"
+          cd "$(mktemp -d)"
+          mkdir dist
+
+          for dir in bins-* ; do
+              platform=${dir#"bins-"}
+              if [[ $platform =~ "windows" ]]; then
+                  exe=".exe"
+              fi
+              pkgname=ice-$GITHUB_REF_NAME-$platform
+              mkdir -p $pkgname
+              cp $source/LICENSE $source/README.md $pkgname
+              mv bins-$platform/ice$exe $pkgname
+              chmod +x $pkgname/ice$exe
+
+              if [ "$exe" = "" ]; then
+                  tar cJf dist/$pkgname.tar.xz $pkgname
+              else
+                  7z a -r dist/$pkgname.zip $pkgname
+              fi
+          done
+
+          mv dist $source/
 
       - name: Copy binaries
         run: |
