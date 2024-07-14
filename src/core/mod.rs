@@ -1,16 +1,21 @@
-use std::{sync::{mpsc, Arc, Mutex}, thread, io::stdin, path::{Path, PathBuf}, fs::{self, DirEntry}};
+use std::{
+    fs::{self, DirEntry},
+    io::stdin,
+    path::{Path, PathBuf},
+    sync::{mpsc, Arc, Mutex},
+    thread,
+};
 
-use ice_core::utils::{time::get_cur_time_str, fs::copy_dir};
-use log::{info, error, warn};
+use crate::{
+    config::Config,
+    utils::{fs::copy_dir, time::get_cur_time_str},
+};
+use log::{error, info, warn};
 
-use crate::config::Config;
+use server::Server;
 
-use self::server::Server;
-
-pub mod server;
-pub mod modrinth;
-pub mod loader;
 pub mod command;
+pub mod server;
 
 pub enum Event {
     ServerDown,
@@ -21,7 +26,7 @@ pub enum Event {
 pub struct Core {
     pub config: Config,
 
-    pub output_tx: mpsc::Sender<String>,  // Sender for stdout_loop
+    pub output_tx: mpsc::Sender<String>, // Sender for stdout_loop
     pub command_tx: mpsc::Sender<String>, // Sender for command_hanle_loop
     pub event_tx: mpsc::Sender<Event>,
 
@@ -87,7 +92,7 @@ impl Core {
             command_tx,
             event_tx,
             running_server,
-            pending_confirm: false
+            pending_confirm: false,
         };
 
         while let Ok(command) = command_rx.recv() {
@@ -169,7 +174,6 @@ impl Core {
         }
     }
 }
-
 
 // Backup related
 pub fn del_snapshot() {

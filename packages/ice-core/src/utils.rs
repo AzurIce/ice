@@ -1,4 +1,4 @@
-use std::{path::Path, error::Error, io::Write};
+use std::{error::Error, io::Write, path::Path};
 
 use curl::easy::Easy;
 use log::info;

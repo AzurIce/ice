@@ -5,11 +5,11 @@ use std::{
     thread,
 };
 
-use log::{info, error};
+use log::{error, info};
 
 use ice_core::utils::regex::player_regex;
 
-use crate::{config::Config, core::loader::Loader};
+use crate::{config::Config, loader::Loader};
 
 use super::Event;
 
@@ -77,7 +77,9 @@ impl Server {
             }
             info!("server end");
             child.wait().expect("failed to wait");
-            event_tx.send(Event::ServerDown).expect("failed to send to event_tx");
+            event_tx
+                .send(Event::ServerDown)
+                .expect("failed to send to event_tx");
         });
 
         Self { child_in }
@@ -100,4 +102,3 @@ impl Server {
         self.writeln(format!("say {}", content).as_str());
     }
 }
-

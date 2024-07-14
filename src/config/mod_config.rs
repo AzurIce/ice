@@ -2,7 +2,7 @@ use std::{collections::HashMap, fs, path::Path};
 
 use serde::{Deserialize, Serialize};
 
-use crate::core::loader::Loader;
+use crate::loader::Loader;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModConfig {

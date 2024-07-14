@@ -1,9 +1,8 @@
 use std::path::PathBuf;
 
-use crate::{
-    core::{loader::Loader, modrinth::get_project_versions},
-    download,
-};
+use types::Version;
+
+use crate::{loader::Loader, utils::download};
 
 /// Download mod from modrinth to `mod_dir` by `slug`, `version_number` and `loader`
 pub fn download_mod<S: AsRef<str>>(slug: S, version_number: S, loader: Loader, mod_dir: PathBuf) {
@@ -45,5 +44,54 @@ pub fn download_mod<S: AsRef<str>>(slug: S, version_number: S, loader: Loader, m
         None => {
             println!("version not found, skipping...");
         }
+    }
+}
+
+const HOST: &str = "https://api.modrinth.com/v2";
+
+pub fn get_project_versions<S: AsRef<str>>(slug: S) -> Vec<Version> {
+    let slug = slug.as_ref();
+    let body = reqwest::blocking::get(format!("{HOST}/project/{slug}/version"))
+        .unwrap()
+        .json::<Vec<Version>>()
+        .unwrap();
+    return body;
+}
+
+mod types {
+    use serde::Deserialize;
+
+    use crate::loader::Loader;
+
+    #[derive(Deserialize, Debug)]
+    pub struct Project {}
+
+    #[derive(Deserialize, Debug)]
+    pub struct Version {
+        pub name: String,
+        pub version_number: String,
+        pub game_versions: Vec<String>,
+        pub loaders: Vec<Loader>,
+        pub id: String,
+        pub project_id: String,
+        pub files: Vec<VersionFile>,
+    }
+
+    #[derive(Deserialize, Debug)]
+    pub struct VersionFile {
+        pub url: String,
+        pub filename: String,
+        pub size: i32,
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::get_project_versions;
+
+    #[test]
+    fn f() {
+        let res = get_project_versions("fabric-api");
+        println!("{:?}", res)
     }
 }

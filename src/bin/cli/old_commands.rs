@@ -4,11 +4,7 @@ use std::{
 };
 
 use clap::Subcommand;
-use ice::{
-    config::Config,
-    core::{loader::Loader, Core},
-    utils::modrinth::download_mod,
-};
+use ice::{config::Config, core::Core, loader::Loader};
 use log::{info, warn};
 use regex::Regex;
 
@@ -31,7 +27,6 @@ pub(super) enum OldCommands {
         loader: Loader,
     },
     Run,
-    ModSync,
 }
 
 impl OldCommands {
@@ -50,20 +45,6 @@ impl OldCommands {
             }
             OldCommands::Init { version, loader } => {
                 init_dir(current_dir, version, loader);
-            }
-            OldCommands::ModSync => {
-                info!("loading config...");
-                let ice_config = Config::load(current_dir.join("Ice.toml")).unwrap();
-
-                for (mod_name, version_number) in &ice_config.mods {
-                    info!("downloading mod [{}]...", mod_name);
-                    download_mod(
-                        mod_name,
-                        version_number,
-                        ice_config.loader,
-                        current_dir.join("mods"),
-                    );
-                }
             }
             OldCommands::Run => {
                 info!("loading config...");

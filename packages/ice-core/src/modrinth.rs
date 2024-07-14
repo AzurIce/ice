@@ -9,7 +9,7 @@ const MODRINTH: &str = "https://api.modrinth.com/v2";
 
 #[cfg(test)]
 mod test {
-    use super::{get_project_versions, File, Project, init_mod};
+    use super::{get_project_versions, init_mod, File, Project};
 
     #[test]
     fn test_get_project() {

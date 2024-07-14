@@ -1,25 +1,31 @@
-pub mod modrinth;
+pub mod fs;
+pub mod path;
+pub mod time;
 
-use serde_json::Value;
+use curl::easy::Easy;
+use std::{error::Error, io::Write, path::Path};
+use tracing::info;
 
-/// Get the latest version number of the game
-pub fn get_latest_version() -> Result<String, String> {
-    let res =
-        reqwest::blocking::get("https://launchermeta.mojang.com/mc/game/version_manifest_v2.json")
-            .map_err(|err| format!("failed to get version_manifest_v2.json: {err}"))?
-            .json::<Value>()
-            .map_err(|err| format!("failed to parse version_manifest_v2.json: {err}"))?;
-    let version = res
-        .as_object()
-        .unwrap()
-        .get("latest")
-        .unwrap()
-        .as_object()
-        .unwrap()
-        .get("release")
-        .unwrap()
-        .as_str()
-        .unwrap()
-        .to_string();
-    Ok(version)
+pub fn download<P: AsRef<Path>>(url: &str, path: P) -> Result<(), Box<dyn Error>> {
+    let path = path.as_ref();
+    if !path.parent().unwrap().exists() {
+        std::fs::create_dir_all(path).unwrap();
+    }
+    if path.exists() {
+        info!("File already exist, skipping download...");
+    } else {
+        info!("Downloading to {:?} from {}", path, url);
+        let mut f = std::fs::File::create(path)?;
+        let mut easy = Easy::new();
+        easy.url(url).unwrap();
+        easy.follow_location(true).unwrap();
+        easy.write_function(move |data| {
+            f.write_all(data).unwrap();
+            Ok(data.len())
+        })
+        .unwrap();
+        easy.perform().unwrap();
+        info!("Downloaded!");
+    }
+    Ok(())
 }

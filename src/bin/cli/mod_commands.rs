@@ -2,9 +2,9 @@ use std::path::Path;
 
 use clap::Subcommand;
 use ice::{
+    api,
     config::{mod_config::ModConfig, Config},
-    core::loader::Loader,
-    utils::{get_latest_version, modrinth::download_mod},
+    loader::Loader,
 };
 use log::info;
 
@@ -32,8 +32,10 @@ impl ModCommands {
                     return;
                 }
 
-                let config =
-                    ModConfig::new(version.unwrap_or(get_latest_version().unwrap()), loader);
+                let config = ModConfig::new(
+                    version.unwrap_or(api::mojang::get_latest_version().unwrap()),
+                    loader,
+                );
                 config.save(current_dir.join("mods.toml")).unwrap();
             }
             ModCommands::Sync => {
@@ -42,7 +44,7 @@ impl ModCommands {
 
                 for (mod_name, version_number) in &ice_config.mods {
                     info!("downloading mod [{}]...", mod_name);
-                    download_mod(
+                    api::modrinth::download_mod(
                         mod_name,
                         version_number,
                         ice_config.loader,

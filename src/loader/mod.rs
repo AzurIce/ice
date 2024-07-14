@@ -1,22 +1,16 @@
-use std::{error::Error, fs, io::Write, path::Path, process::Command};
+use std::{
+    error::Error,
+    fmt::{self, Display, Formatter},
+    fs,
+    io::Write,
+    path::Path,
+    process::Command,
+};
 
 use clap::ValueEnum;
 use ice_core::utils::download;
 use log::info;
 use serde::{Deserialize, Serialize};
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_init_server_jar() {
-        let loader = Loader::Quilt;
-        loader
-            .init_server_jar("1.20.4")
-            .expect("failed to init server jar");
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 #[serde(rename_all = "lowercase")]
@@ -25,6 +19,17 @@ pub enum Loader {
     Fabric,
     Forge,
     NeoForge,
+}
+
+impl Display for Loader {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::Quilt => "quilt",
+            Self::Fabric => "fabric",
+            Self::Forge => "forge",
+            Self::NeoForge => "neoforge",
+        })
+    }
 }
 
 impl Loader {
@@ -76,5 +81,18 @@ impl Loader {
             }
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_init_server_jar() {
+        let loader = Loader::Quilt;
+        loader
+            .init_server_jar("1.20.4")
+            .expect("failed to init server jar");
     }
 }

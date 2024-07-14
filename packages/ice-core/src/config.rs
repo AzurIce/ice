@@ -38,7 +38,7 @@ pub struct ServerConfig {
     pub jvm_options: String,
     pub version: String,
     pub properties: HashMap<String, String>,
-    pub mods: HashMap<String, ModInfo>
+    pub mods: HashMap<String, ModInfo>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

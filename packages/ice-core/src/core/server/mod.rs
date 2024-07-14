@@ -18,7 +18,7 @@ use log::{error, info};
 use regex::Regex;
 
 use crate::{
-    config::{ServerConfig, ModInfo},
+    config::{ModInfo, ServerConfig},
     fabric::init_server_jar,
     utils::{path::split_parent_and_file, regex::player_regex},
 };
@@ -132,7 +132,7 @@ impl Server {
     // pub fn init_mods(&self) {
     //     for (mod_slug, mod_info) in self.config.mods {
     //         match mod_info {
-    //             ModInfo::Latest() 
+    //             ModInfo::Latest()
     //         }
     //     }
     // }
@@ -156,8 +156,6 @@ impl Server {
 
         info!("server initializing(mods)...");
         // server.init_mods();
-        
-
 
         let server = Arc::new(Mutex::new(server));
 

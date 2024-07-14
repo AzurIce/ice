@@ -1,10 +1,10 @@
 mod config;
 mod core;
 mod fabric;
-mod server;
-mod utils;
 #[allow(unused)]
 mod modrinth;
+mod server;
+mod utils;
 
 use core::Core;
 use std::{error::Error, sync::Arc};

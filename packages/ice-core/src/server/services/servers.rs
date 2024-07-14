@@ -43,7 +43,9 @@ pub async fn start_server(
     Path(name): Path<String>,
 ) -> (StatusCode, Json<serde_json::Value>) {
     info!("start_server: {}", name);
-    let res = tokio::task::spawn_blocking(move || state.run_server(name)).await.expect("failed to exec");
+    let res = tokio::task::spawn_blocking(move || state.run_server(name))
+        .await
+        .expect("failed to exec");
     match res {
         Ok(_) => (
             StatusCode::OK,

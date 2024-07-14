@@ -8,5 +8,7 @@ use super::Core;
 // }
 
 pub trait Task {
-    fn perform(core: Arc<Mutex<Core>>) where Self: Sized;
+    fn perform(core: Arc<Mutex<Core>>)
+    where
+        Self: Sized;
 }
