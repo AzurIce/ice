@@ -1,9 +1,9 @@
 pub mod fs;
 pub mod path;
 pub mod time;
+pub mod regex;
 
-use curl::easy::Easy;
-use std::{error::Error, io::Write, path::Path};
+use std::{error::Error, path::Path};
 use tracing::info;
 
 pub fn download<P: AsRef<Path>>(url: &str, path: P) -> Result<(), Box<dyn Error>> {
@@ -15,16 +15,8 @@ pub fn download<P: AsRef<Path>>(url: &str, path: P) -> Result<(), Box<dyn Error>
         info!("File already exist, skipping download...");
     } else {
         info!("Downloading to {:?} from {}", path, url);
-        let mut f = std::fs::File::create(path)?;
-        let mut easy = Easy::new();
-        easy.url(url).unwrap();
-        easy.follow_location(true).unwrap();
-        easy.write_function(move |data| {
-            f.write_all(data).unwrap();
-            Ok(data.len())
-        })
-        .unwrap();
-        easy.perform().unwrap();
+        let res = reqwest::blocking::get(url)?;
+        std::fs::write(path, res.bytes()?)?;
         info!("Downloaded!");
     }
     Ok(())

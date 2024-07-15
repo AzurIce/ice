@@ -8,9 +8,10 @@ use std::{
 };
 
 use clap::ValueEnum;
-use ice_core::utils::download;
 use log::info;
 use serde::{Deserialize, Serialize};
+
+use crate::utils::download;
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 #[serde(rename_all = "lowercase")]

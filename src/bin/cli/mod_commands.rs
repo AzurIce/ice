@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{fs, path::Path};
 
 use clap::Subcommand;
 use ice::{
@@ -19,6 +19,8 @@ pub(super) enum ModCommands {
     },
     /// Sync mods
     Sync,
+    /// Update mods
+    Update,
 }
 
 impl ModCommands {
@@ -39,18 +41,39 @@ impl ModCommands {
                 config.save(current_dir.join("mods.toml")).unwrap();
             }
             ModCommands::Sync => {
-                info!("loading config...");
-                let ice_config = Config::load(current_dir.join("mods.toml")).unwrap();
+                info!("loading mods.toml...");
+                let ice_config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
 
+                info!("syncing mods...");
                 for (mod_name, version_number) in &ice_config.mods {
                     info!("downloading mod [{}]...", mod_name);
                     api::modrinth::download_mod(
                         mod_name,
                         version_number,
                         ice_config.loader,
-                        current_dir.join("mods"),
+                        current_dir,
                     );
                 }
+            }
+            ModCommands::Update => {
+                info!("loading mods.toml...");
+                let mut ice_config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
+
+                info!("updating mods...");
+                for file in fs::read_dir(current_dir).unwrap() {
+                    let file = file.unwrap();
+                    let path = file.path();
+                    if path.extension().unwrap() == "jar" {
+                        if let Ok((slug, version_number)) =
+                            api::modrinth::update_mod(path, ice_config.loader, &ice_config.version)
+                        {
+                            ice_config.mods.insert(slug, version_number);
+                        }
+                    }
+                }
+
+                info!("updating mods.toml...");
+                ice_config.save(current_dir.join("mods.toml")).unwrap();
             }
         }
     }

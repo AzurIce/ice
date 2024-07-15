@@ -44,6 +44,14 @@ impl Config {
         // TODO: check server version
         Ok(config)
     }
+
+    pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), String> {
+        let config = toml::to_string_pretty(self)
+            .map_err(|err| format!("failed to serialize config: {:?}", err))?;
+        fs::write(path, config)
+            .map_err(|err| format!("failed to write config file: {:?}", err))?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]

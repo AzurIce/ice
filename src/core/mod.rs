@@ -76,7 +76,7 @@ impl Core {
                     Event::ServerLog(msg) => {
                         println!("{msg}")
                     }
-                    Event::PlayerMessage { player, msg } => {
+                    Event::PlayerMessage { player: _, msg } => {
                         if msg.starts_with("#") {
                             _command_tx
                                 .send(msg.clone())

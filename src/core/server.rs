@@ -7,9 +7,7 @@ use std::{
 
 use log::{error, info};
 
-use ice_core::utils::regex::player_regex;
-
-use crate::{config::Config, loader::Loader};
+use crate::{config::Config, loader::Loader, utils::regex::regex::player_regex};
 
 use super::Event;
 
