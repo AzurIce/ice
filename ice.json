@@ -1,5 +1,5 @@
 {
-"version": "0.1.0-alpha.3",
-"url": "https://github.com/AzurIce/ice/releases/download/0.1.0-alpha.3/ice-0.1.0-alpha.3-x86_64-windows.zip",
+"version": "0.1.0-alpha.4",
+"url": "https://github.com/AzurIce/ice/releases/download/0.1.0-alpha.4/ice-0.1.0-alpha.4-x86_64-windows.zip",
 "bin": "ice.exe"
 }
