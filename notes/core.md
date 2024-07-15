@@ -1,0 +1,6 @@
+```mermaid
+flowchart
+
+Stdout -
+```
+

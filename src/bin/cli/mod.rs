@@ -1,11 +1,13 @@
 mod mod_commands;
 mod old_commands;
+mod server;
 
 use clap::{Parser, Subcommand};
 use std::env;
 
 use mod_commands::ModCommands;
 use old_commands::OldCommands;
+use server::ServerCommands;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -26,6 +28,11 @@ enum Commands {
         #[command(subcommand)]
         command: ModCommands,
     },
+    /// Server related commands
+    Server {
+        #[command(subcommand)]
+        command: ServerCommands,
+    }
 }
 
 impl Cli {
@@ -35,6 +42,7 @@ impl Cli {
         match self.command {
             Commands::Old { command } => command.exec(current_dir),
             Commands::Mod { command } => command.exec(current_dir),
+            Commands::Server { command } => command.exec(current_dir),
         }
     }
 }

@@ -34,6 +34,58 @@ impl Display for Loader {
 }
 
 impl Loader {
+    pub fn installed<P: AsRef<Path>>(&self, current_dir: P) -> bool {
+        let current_dir = current_dir.as_ref();
+        current_dir.join("server").join("server.jar").exists()
+    }
+
+    pub fn install<P: AsRef<Path>, S: AsRef<str>>(
+        &self,
+        current_dir: P,
+        game_version: S,
+    ) -> Result<(), Box<dyn Error>> {
+        let current_dir = current_dir.as_ref();
+        let game_version = game_version.as_ref();
+
+        if !matches!(self, Loader::Quilt) {
+            return Err("not implemented".into());
+        }
+
+        let ice_dir = current_dir.join(".ice");
+        let res = reqwest::blocking::get(
+            "https://quiltmc.org/api/v1/download-latest-installer/java-universal",
+        )?;
+
+        let url = res.url();
+        let filename = res
+            .url()
+            .path()
+            .split("/")
+            .last()
+            .unwrap_or("quilt-installer");
+        let installer_path = ice_dir.join(filename);
+        download(url.as_str(), &installer_path)?;
+
+        info!("installing server");
+        let success = Command::new("java")
+            .current_dir(current_dir)
+            .args([
+                "-jar",
+                installer_path.as_os_str().to_str().unwrap(),
+                "install",
+                "server",
+                game_version,
+                "--download-server",
+            ])
+            .status()?
+            .success();
+        if !success {
+            panic!("failed to install server")
+        }
+
+        Ok(())
+    }
+
     pub fn init_server_jar(&self, version: &str) -> Result<(), Box<dyn Error>> {
         match self {
             Self::Quilt => {

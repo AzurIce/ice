@@ -21,7 +21,7 @@
 
 
 ```mermaid
-flowchart
+flowchart LR
 
 file --> sha1
 file --> sha2
