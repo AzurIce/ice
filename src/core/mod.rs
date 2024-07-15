@@ -12,6 +12,7 @@ use crate::{
 };
 use log::{error, info, warn};
 
+use regex::Regex;
 use server::Server;
 
 pub mod command;
@@ -25,6 +26,7 @@ pub enum Event {
 
 pub struct Core {
     pub config: Config,
+    pub server_dir: PathBuf,
 
     pub output_tx: mpsc::Sender<String>, // Sender for stdout_loop
     pub command_tx: mpsc::Sender<String>, // Sender for command_hanle_loop
@@ -35,7 +37,9 @@ pub struct Core {
 }
 
 impl Core {
-    pub fn run(config: Config) {
+    pub fn run<P: AsRef<Path>>(config: Config, server_dir: P) {
+        let server_dir = server_dir.as_ref().to_owned();
+
         let running_server = Arc::new(Mutex::new(None::<Server>));
         let (output_tx, output_rx) = mpsc::channel::<String>();
         thread::spawn(move || {
@@ -88,6 +92,7 @@ impl Core {
         });
         let mut core = Core {
             config,
+            server_dir,
             output_tx,
             command_tx,
             event_tx,
@@ -98,6 +103,26 @@ impl Core {
         while let Ok(command) = command_rx.recv() {
             core.handle_command(command);
         }
+    }
+
+    fn update_properties(&self) {
+        info!("checking properties...");
+        let path = self.server_dir.join("server.properties");
+        if !path.exists() {
+            warn!("server.properties not found, cannot patch, skipping...");
+            return;
+        }
+        info!("patching properties...");
+        let mut buf = fs::read_to_string(&path).expect("failed to read server.properties");
+
+        for (key, value) in &self.config.properties {
+            info!("setting property [{}] to [{}]", key, value);
+            let regex = Regex::new(format!(r"{}=([^#\n\r]*)", key).as_str()).unwrap();
+            buf = regex
+                .replace(&buf, format!("{}={}", key, value))
+                .to_string();
+        }
+        fs::write(path, buf.as_bytes()).expect("failed to write server.properties: {:?}");
     }
 
     fn handle_command(&mut self, command: String) {
@@ -119,6 +144,7 @@ impl Core {
                 if server.is_some() {
                     error!("server is already running");
                 } else {
+                    self.update_properties();
                     *server = Some(Server::run(self.config.clone(), self.event_tx.clone()));
                 }
             }

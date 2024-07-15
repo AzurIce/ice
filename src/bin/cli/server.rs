@@ -78,32 +78,11 @@ impl ServerCommands {
                     return;
                 }
 
-                info!("checking properties...");
-                let server_dir = current_dir.join("server");
-                if server_dir.join("server.properties").exists() {
-                    info!("patching properties...");
-                    let property_file = server_dir.join("server.properties");
-                    let mut buf = fs::read_to_string(&property_file)
-                        .expect("failed to read server.properties");
-
-                    for (key, value) in &config.properties {
-                        info!("setting property [{}] to [{}]", key, value);
-                        let regex = Regex::new(format!(r"{}=([^#\n\r]*)", key).as_str()).unwrap();
-                        buf = regex
-                            .replace(&buf, format!("{}={}", key, value))
-                            .to_string();
-                    }
-                    fs::write(property_file, buf.as_bytes())
-                        .expect("failed to write server.properties: {:?}");
-                } else {
-                    warn!("server.properties not found, cannot patch, skipping...")
-                }
-
                 info!("checking mods...");
                 // TODO: check mods
 
                 info!("the core is running...");
-                Core::run(config)
+                Core::run(config, current_dir.join("server"))
             }
         }
     }
