@@ -5,8 +5,7 @@ use std::{
 
 use clap::Subcommand;
 use ice::{api::mojang::get_latest_version, config::Config, core::Core, loader::Loader};
-use regex::Regex;
-use tracing::{info, warn, Level};
+use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
 #[derive(Subcommand)]

@@ -25,7 +25,7 @@ enum Commands {
     Server {
         #[command(subcommand)]
         command: ServerCommands,
-    }
+    },
 }
 
 impl Cli {
