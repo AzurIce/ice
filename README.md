@@ -1,36 +1,46 @@
 # Ice
 
-A minecraft server helper, the successor of [AzurIce/ACH (github.com)](https://github.com/AzurIce/ACH)
+一个 mineraft 命令行助手，可以根据 `toml` 配置文件进行 mod 管理、server 管理等功能。
 
-Doing entirely reconstruct...
+由 MCSH --> ACH --> Ice 一路演进而来。
 
-## Install & Update
+## 安装 & 更新
 
-### Scoop
+### Windows - Scoop
 
-Install:
+Windows 用户推荐使用 [ScoopInstaller/Scoop: A command-line installer for Windows. (github.com)](https://github.com/ScoopInstaller/Scoop) 进行安装。
+
+#### 安装
 
 ```
 scoop bucket add ice https://github.com/azurice/ice
 scoop install ice/ice
 ```
 
-Update:
+#### 更新
 
 ```
 scoop update
 scoop update ice
 ```
 
-## Usage
+### Windows & Linux & MacOS - Cargo
+
+或者使用 Cargo 进行安装/更新：
+
+```
+cargo install --git https://github.com/AzurIce/ice.git --locked
+```
+
+## 使用方式
 
 ```
 Usage: ice.exe <COMMAND>
 
 Commands:
-  old   Old things, will be deprecated
-  mod   Mod related commands
-  help  Print this message or the help of the given subcommand(s)
+  mod     Mod related commands
+  server  Server related commands
+  help    Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help     Print help
@@ -39,25 +49,108 @@ Options:
 
 ### mod
 
-`ice mod` can manage your mods based on the `mods.toml` at current directory.
+```
+Usage: ice.exe mod <COMMAND>
 
-To use it, you should make sure you are in the `mods` folder.
+Commands:
+  init    Initialize a mods.toml
+  sync    Sync mods
+  update  Update mods
+  add     Add mod
+  help    Print this message or the help of the given subcommand(s)
 
-- `ice mod init`: create a `mods.toml` file
+Options:
+  -h, --help  Print help
+```
 
-  You can specify the game version and the loader using `-v` and `-l`, learn more from `ice mod init -h`
+`ice mod` 命令可以使用当前目录的 `mods.toml` 来管理当前目录的 mod，目前所有的 mod 均通过 Modrinth API 获取（未来可能会支持 CurseForge 等其他平台）。
 
-- `ice mod sync`: sync the mods under the current directory with `mods.toml`.
+可用的命令如下：
 
-  Currently, what it done is just download mods specified in `mods.toml`
+- `init`：创建一个新的 `mods.toml` 文件
 
-- `ice mod update`: update the mods under the current directory, and update `mods.toml`
+    可以通过 `-v` 和 `-l` 指定 `version` 和 `loader`，默认 `version` 为最新正式版，`loader` 为 `quilt`。
 
-- `ice mod add <slug>`: download the latest version of mod `<slug>` which satisfies loader and version, and add it to `mods.toml`
+    下面是一个 `mods.toml` 文件的例子：
+
+    ```toml
+    version = "1.21"
+    loader = "quilt"
+    
+    [mods]
+    fabric-language-kotlin = "1.11.0+kotlin.2.0.0"
+    appleskin = "3.0.2+mc1.21"
+    sodium = "mc1.21-0.5.11"
+    indium = "1.0.34+mc1.21"
+    continuity = "3.0.0-beta.5+1.21"
+    iris = "1.7.3+1.21"
+    voxelmap-updated = "1.21-1.13.1"
+    modmenu = "11.0.1"
+    sodium-extra = "mc1.21-0.5.7"
+    libipn = "fabric-1.21-rc1-6.0.0"
+    fabric-api = "0.100.7+1.21"
+    ```
+
+    - `version`：游戏版本
+
+    - `loader`：使用的加载器
+
+    - `mods`：定义的 mod 列表
+
+        是一系列 `slug` - `version_number` 的键值对，`slug` 即 Modrinth 网站 mod 页面 url 内的 mod 名称。
+
+- `ice mod sync`：根据 `mods.toml` 中的定义下载缺失的 mod。
+
+  目前只实现了下载没有的，没做删除多出来的。
+
+- `ice mod update`：下载当前目录所有 mod 符合 `version` 和 `loader` 的最新版本，删除老版本，并更新到 `mods.toml` 中。
+- `ice mod add <slug>`: 下载符合 `version` 和 `loader` 的最新版本 mod，并更新到 `mods.toml` 中
 
 ### server
 
-WIP
+```
+Usage: ice.exe server <COMMAND>
+
+Commands:
+  new
+  init
+  install
+  run
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help  Print help
+```
+
+`ice server` 用于管理服务器，以及使用 ice 内核启动服务器（提供备份等功能的支持）。
+
+- `new` / `init`：创建新目录/在当前目录初始化一个 `Ice.toml`
+
+    下面是一个示例的 `Ice.toml`：
+
+    ```toml
+    name = "Survival"
+    version = "1.21"
+    loader = "quilt"
+    jvm_options = ""
+    
+    [properties]
+    motd = "AzurCraft Survival"
+    server-ip = "0.0.0.0"
+    view-distance = "16"
+    
+    [mods]
+    appleskin = "3.0.2+mc1.21"
+    
+    ```
+
+- `install`：根据当前目录下的 `Ice.toml` 安装服务器
+
+- `run`：使用 ice 内核启动服务器
+
+## Ice 内核
+
+就是以前的 MCSH / ACH。
 
 ---
 
