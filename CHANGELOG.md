@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.5](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.4..0.1.0-alpha.5) - 2024-07-15
+
+### <!-- 0 -->🎈 Features
+
+
+- Server new, init, install, run - ([20545f0](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/20545f07445d96206999eaf1ddd44f49cb12a191))
+- Update properties inside Code (every time #start command runs) - ([f6bbd7a](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/f6bbd7a0e725b689f407f432cd51ca0c5d54e4b4))
+
+### <!-- 2 --> Refactor
+
+
+- Removed OldCommands - ([268f374](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/268f374ca00ed7acab85462a3f329f14491b422a))
+
+### <!-- 3 -->📚 Documentation
+
+
+- Update README.md - ([b635180](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/b635180a4faaee1bd602da242f6d3a598090f404))
+
 ## [0.1.0-alpha.4](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.3..0.1.0-alpha.4) - 2024-07-15
 
 ### <!-- 0 -->🎈 Features
