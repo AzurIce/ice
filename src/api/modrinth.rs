@@ -44,7 +44,7 @@ pub fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
     let dir = dir.as_ref();
     cprint!("<g>Syncing</> [{loader:?}] {slug} = {version_number}...");
 
-    let versions = get_project_versions(&slug);
+    let versions = get_project_versions(slug);
     match versions.iter().find(|v| {
         v.version_number == version_number
             && (v.loaders.contains(&loader)
@@ -55,7 +55,7 @@ pub fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
             if dir.join(filename).exists() {
                 println!("already exists, skipping...");
             } else {
-                println!("");
+                println!();
                 version.download_to(dir).unwrap()
             }
         }
@@ -66,7 +66,7 @@ pub fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
 }
 
 /// Add a mod `slug`
-/// 
+///
 /// use the latest version satisfies to `loader` and `game_version`
 pub fn add_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
     slug: S,
@@ -98,7 +98,7 @@ pub fn update_mod<P: AsRef<Path>, S: AsRef<str>>(
     let path = path.as_ref();
     let dir = path.parent().unwrap();
 
-    let hash = get_sha1_hash(&path).map_err(|err| format!("failed to get hash: {err}"))?;
+    let hash = get_sha1_hash(path).map_err(|err| format!("failed to get hash: {err}"))?;
     let loaders = if let Loader::Quilt = loader {
         vec![Loader::Quilt, Loader::Fabric]
     } else {
@@ -130,20 +130,14 @@ const HOST: &str = "https://api.modrinth.com/v2";
 
 pub fn get_project<S: AsRef<str>>(id_or_slug: S) -> Project {
     let id_or_slug = id_or_slug.as_ref();
-    let body = reqwest::blocking::get(format!("{HOST}/project/{id_or_slug}"))
-        .unwrap()
-        .json::<Project>()
-        .unwrap();
-    return body;
+    let res = reqwest::blocking::get(format!("{HOST}/project/{id_or_slug}")).unwrap();
+    res.json::<Project>().unwrap()
 }
 
 pub fn get_project_versions<S: AsRef<str>>(slug: S) -> Vec<Version> {
     let slug = slug.as_ref();
-    let body = reqwest::blocking::get(format!("{HOST}/project/{slug}/version"))
-        .unwrap()
-        .json::<Vec<Version>>()
-        .unwrap();
-    return body;
+    let res = reqwest::blocking::get(format!("{HOST}/project/{slug}/version")).unwrap();
+    res.json::<Vec<Version>>().unwrap()
 }
 
 #[derive(Debug, Serialize)]

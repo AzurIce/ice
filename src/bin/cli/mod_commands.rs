@@ -3,11 +3,8 @@ use std::{fs, path::Path};
 use clap::Subcommand;
 use color_print::{cprint, cprintln};
 use ice::{
-    api::{
-        self,
-        modrinth::{add_mod, get_project_versions},
-    },
-    config::{mod_config::ModConfig, Config},
+    api::{self, modrinth::add_mod},
+    config::mod_config::ModConfig,
     loader::Loader,
 };
 use log::info;

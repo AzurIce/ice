@@ -106,8 +106,9 @@ pub fn init_dir<P: AsRef<Path>>(dir: P, version: Option<String>, loader: Loader)
     let bish_config = Config::new(name.to_string(), version, loader);
     let bish_config = toml::to_string_pretty(&bish_config).expect("toml err");
     let bish_config_path = &dir.join("Ice.toml");
-    fs::write(&bish_config_path, bish_config)
-        .expect(format!("failed to write to [{:?}]", bish_config_path).as_str());
+    fs::write(bish_config_path, bish_config)
+        .map_err(|err| format!("failed to write to [{:?}]: {err}", bish_config_path))
+        .unwrap();
 
     info!("initializing dir...");
     // fs::create_dir(dir.join("server")).expect("failed to create directory");

@@ -1,7 +1,7 @@
 pub mod fs;
 pub mod path;
-pub mod time;
 pub mod regex;
+pub mod time;
 
 use std::{error::Error, path::Path};
 use tracing::info;

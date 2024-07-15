@@ -7,7 +7,7 @@ use std::{
 
 use log::{error, info};
 
-use crate::{config::Config, loader::Loader, utils::regex::regex::player_regex};
+use crate::{config::Config, loader::Loader, utils::regex::player_regex};
 
 use super::Event;
 
