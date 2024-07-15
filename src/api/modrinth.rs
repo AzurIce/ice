@@ -58,14 +58,36 @@ pub fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
                 println!("");
                 version.download_to(dir).unwrap()
             }
-        },
+        }
         None => {
             println!("version not found, skipping...");
         }
     }
 }
 
-/// update the mod from `path`
+/// Add a mod `slug`
+/// 
+/// use the latest version satisfies to `loader` and `game_version`
+pub fn add_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
+    slug: S,
+    loader: Loader,
+    game_version: V,
+    dir: P,
+) -> Result<(String, String), String> {
+    let slug = slug.as_ref();
+    let dir = dir.as_ref();
+
+    let loaders = if let Loader::Quilt = loader {
+        vec![Loader::Quilt, Loader::Fabric]
+    } else {
+        vec![loader]
+    };
+    let version = get_latest_version_from_slug(slug, loaders, game_version).unwrap();
+    version.download_to(dir)?;
+    Ok((slug.to_string(), version.version_number))
+}
+
+/// Update the mod from `path`
 ///
 /// if success return the new version_number
 pub fn update_mod<P: AsRef<Path>, S: AsRef<str>>(
@@ -156,6 +178,10 @@ pub fn get_version_from_hash<S: AsRef<str>>(
     Ok(body)
 }
 
+/// get the latest version of `slug`
+///
+/// if the version supports on of the loaders, it will consider valid,
+/// same as game_version(current only on version is provided)
 pub fn get_latest_version_from_slug<S: AsRef<str>, V: AsRef<str>>(
     slug: S,
     loaders: Vec<Loader>,

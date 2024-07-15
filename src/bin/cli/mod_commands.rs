@@ -1,8 +1,12 @@
 use std::{fs, path::Path};
 
 use clap::Subcommand;
+use color_print::{cprint, cprintln};
 use ice::{
-    api,
+    api::{
+        self,
+        modrinth::{add_mod, get_project_versions},
+    },
     config::{mod_config::ModConfig, Config},
     loader::Loader,
 };
@@ -21,6 +25,8 @@ pub(super) enum ModCommands {
     Sync,
     /// Update mods
     Update,
+    /// Add mod
+    Add { slug: String },
 }
 
 impl ModCommands {
@@ -42,22 +48,22 @@ impl ModCommands {
             }
             ModCommands::Sync => {
                 info!("loading mods.toml...");
-                let ice_config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
+                let config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
 
                 info!("syncing mods...");
-                for (mod_name, version_number) in &ice_config.mods {
+                for (mod_name, version_number) in &config.mods {
                     info!("downloading mod [{}]...", mod_name);
                     api::modrinth::download_mod(
                         mod_name,
                         version_number,
-                        ice_config.loader,
+                        config.loader,
                         current_dir,
                     );
                 }
             }
             ModCommands::Update => {
                 info!("loading mods.toml...");
-                let mut ice_config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
+                let mut config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
 
                 info!("updating mods...");
                 for file in fs::read_dir(current_dir).unwrap() {
@@ -65,15 +71,35 @@ impl ModCommands {
                     let path = file.path();
                     if path.extension().unwrap() == "jar" {
                         if let Ok((slug, version_number)) =
-                            api::modrinth::update_mod(path, ice_config.loader, &ice_config.version)
+                            api::modrinth::update_mod(path, config.loader, &config.version)
                         {
-                            ice_config.mods.insert(slug, version_number);
+                            config.mods.insert(slug, version_number);
                         }
                     }
                 }
 
-                info!("updating mods.toml...");
-                ice_config.save(current_dir.join("mods.toml")).unwrap();
+                cprintln!("updating mods.toml...");
+                config.save(current_dir.join("mods.toml")).unwrap();
+                cprintln!("done!")
+            }
+            ModCommands::Add { slug } => {
+                info!("loading mods.toml...");
+                let mut config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
+
+                cprint!("<g>Adding</> {slug}...");
+                if config.mods.contains_key(&slug) {
+                    cprintln!("already exists, skipped.");
+                    return;
+                }
+                cprintln!();
+                match add_mod(slug, config.loader, config.version.clone(), current_dir) {
+                    Ok((slug, version)) => {
+                        config.mods.insert(slug, version);
+                        config.save(current_dir.join("mods.toml")).unwrap();
+                    }
+                    Err(err) => cprintln!("<r>err</>: {err}"),
+                }
+                cprintln!("done!")
             }
         }
     }
