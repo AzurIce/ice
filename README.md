@@ -51,7 +51,9 @@ To use it, you should make sure you are in the `mods` folder.
 
   Currently, what it done is just download mods specified in `mods.toml`
 
-- `ice mod update`: WIP
+- `ice mod update`: update the mods under the current directory, and update `mods.toml`
+
+- `ice mod add <slug>`: download the latest version of mod `<slug>` which satisfies loader and version, and add it to `mods.toml`
 
 ### server
 
