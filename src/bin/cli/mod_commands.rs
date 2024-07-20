@@ -54,6 +54,7 @@ impl ModCommands {
                         mod_name,
                         version_number,
                         config.loader,
+                        &config.version,
                         current_dir,
                     );
                 }

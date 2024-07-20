@@ -37,18 +37,25 @@ pub fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
     slug: S,
     version_number: S,
     loader: Loader,
+    game_version: S,
     dir: P,
 ) {
     let slug = slug.as_ref();
     let version_number = version_number.as_ref();
+    let game_version = game_version.as_ref();
     let dir = dir.as_ref();
     cprint!("<g>Syncing</> [{loader:?}] {slug} = {version_number}...");
 
+    let loaders = if let Loader::Quilt = loader {
+        vec![Loader::Quilt, Loader::Fabric]
+    } else {
+        vec![loader]
+    };
     let versions = get_project_versions(slug);
     match versions.iter().find(|v| {
         v.version_number == version_number
-            && (v.loaders.contains(&loader)
-                || loader == Loader::Quilt && v.loaders.contains(&Loader::Fabric))
+            && loaders.iter().any(|l| v.loaders.contains(l))
+            && v.game_versions.contains(&game_version.to_string())
     }) {
         Some(version) => {
             let filename = version.get_filename();
