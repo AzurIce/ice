@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha-9](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha-8..0.1.0-alpha-9) - 2024-07-20
+
+### <!-- 0 -->🎈 Features
+
+
+- Sync mod deletes redundant mods, and corrects mods whose version is incorrect - ([922f1a0](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/922f1a07f7e021df62116c051f20a9e8d13373b1))
+
 ## [0.1.0-alpha-8](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.7..0.1.0-alpha-8) - 2024-07-20
 
 ### <!-- 1 -->🕷️ Bug Fixes

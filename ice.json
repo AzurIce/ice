@@ -1,6 +1,6 @@
 {
-"version": "0.1.0-alpha-8",
-	"url": "https://github.com/AzurIce/ice/releases/download/0.1.0-alpha-8/ice-0.1.0-alpha-8-x86_64-windows.zip",
-	"extract_dir": "ice-0.1.0-alpha-8-x86_64-windows",
+"version": "0.1.0-alpha-9",
+	"url": "https://github.com/AzurIce/ice/releases/download/0.1.0-alpha-9/ice-0.1.0-alpha-9-x86_64-windows.zip",
+	"extract_dir": "ice-0.1.0-alpha-9-x86_64-windows",
 	"bin": "ice.exe"
 }
