@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha-10](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha-9..0.1.0-alpha-10) - 2024-07-20
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Added liteloader variant for loader - ([8c77b4f](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/8c77b4f515bd17cf1ef732c8362e2c5d360a2c96))
+
 ## [0.1.0-alpha-9](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha-8..0.1.0-alpha-9) - 2024-07-20
 
 ### <!-- 0 -->🎈 Features
