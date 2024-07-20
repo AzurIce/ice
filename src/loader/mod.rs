@@ -20,6 +20,7 @@ pub enum Loader {
     Fabric,
     Forge,
     NeoForge,
+    LiteLoader,
 }
 
 impl Display for Loader {
@@ -29,6 +30,7 @@ impl Display for Loader {
             Self::Fabric => "fabric",
             Self::Forge => "forge",
             Self::NeoForge => "neoforge",
+            Self::LiteLoader => "liteloader"
         })
     }
 }
