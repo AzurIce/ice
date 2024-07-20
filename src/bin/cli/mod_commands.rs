@@ -23,7 +23,7 @@ pub(super) enum ModCommands {
     /// Update mods
     Update,
     /// Add mod
-    Add { slug: String },
+    Add { slugs: Vec<String> },
 }
 
 impl ModCommands {
@@ -79,22 +79,24 @@ impl ModCommands {
                 config.save(current_dir.join("mods.toml")).unwrap();
                 cprintln!("done!")
             }
-            ModCommands::Add { slug } => {
+            ModCommands::Add { slugs } => {
                 info!("loading mods.toml...");
                 let mut config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
 
-                cprint!("<g>Adding</> {slug}...");
-                if config.mods.contains_key(&slug) {
-                    cprintln!("already exists, skipped.");
-                    return;
-                }
-                cprintln!();
-                match add_mod(slug, config.loader, config.version.clone(), current_dir) {
-                    Ok((slug, version)) => {
-                        config.mods.insert(slug, version);
-                        config.save(current_dir.join("mods.toml")).unwrap();
+                for slug in slugs {
+                    cprint!("<g>Adding</> {slug}...");
+                    if config.mods.contains_key(&slug) {
+                        cprintln!("already exists, skipped.");
+                        return;
                     }
-                    Err(err) => cprintln!("<r>err</>: {err}"),
+                    cprintln!();
+                    match add_mod(slug, config.loader, config.version.clone(), current_dir) {
+                        Ok((slug, version)) => {
+                            config.mods.insert(slug, version);
+                            config.save(current_dir.join("mods.toml")).unwrap();
+                        }
+                        Err(err) => cprintln!("<r>err</>: {err}"),
+                    }
                 }
                 cprintln!("done!")
             }
