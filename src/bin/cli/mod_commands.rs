@@ -122,10 +122,10 @@ impl ModCommands {
                     let file = file.unwrap();
                     let path = file.path();
                     if path.extension().unwrap() == "jar" {
-                        if let Ok((slug, version_number)) =
+                        if let Ok((slug, version)) =
                             api::modrinth::update_mod(path, config.loader, &config.version)
                         {
-                            config.mods.insert(slug, version_number);
+                            config.insert_mod(slug, version);
                         }
                     }
                 }
@@ -147,7 +147,7 @@ impl ModCommands {
                     cprintln!();
                     match add_mod(slug, config.loader, config.version.clone(), current_dir) {
                         Ok((slug, version)) => {
-                            config.mods.insert(slug, version);
+                            config.insert_mod(slug, version);
                             config.save(current_dir.join("mods.toml")).unwrap();
                         }
                         Err(err) => cprintln!("<r>err</>: {err}"),
