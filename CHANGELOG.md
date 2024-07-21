@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.6](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.5..0.1.0-alpha.6) - 2024-07-21
+
+### <!-- 5 -->🎨 Styling
+
+
+- Lint - ([aaf05dd](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/aaf05dde098311ae4d5e62a793b6699b1c39a44a))
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+
+
+- Fix scoop extract dir - ([8f32669](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/8f326699952a3bad184a7d1602f95930ec14cd04))
+
 ## [0.1.0-alpha.5](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.4..0.1.0-alpha.5) - 2024-07-15
 
 ### <!-- 0 -->🎈 Features
