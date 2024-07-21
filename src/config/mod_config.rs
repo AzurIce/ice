@@ -69,30 +69,3 @@ impl ModConfig {
         }
     }
 }
-
-#[cfg(test)]
-mod test {
-    use toml_edit::{de::from_document, value, DocumentMut};
-
-    use crate::config::Config;
-
-    use super::ModConfig;
-
-    #[test]
-    fn test_toml_edit() {
-        let config = r#"version = "1.20.1"
-loader = "quilt"
-
-# mods
-[mods]
-a = "123" # asdsad
-# asds
-b = "123123123" # asdd
-#asdskadasjd"#;
-        let mut config = ModConfig::from_str(&config).unwrap();
-
-        config.insert_mod("asd".to_string(), "123123".to_string());
-
-        println!("{}", config.to_string());
-    }
-}

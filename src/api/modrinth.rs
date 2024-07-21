@@ -1,33 +1,31 @@
-use std::{
-    fmt::Display,
-    fs,
-    path::{Path, PathBuf},
-    vec,
-};
+use std::{error::Error, fmt::Display, fs, path::Path, vec};
 
 use color_print::{cprint, cprintln};
 use serde::Serialize;
 use serde_json::json;
 use types::{Project, Version};
+use utils::download_version_file_blocking;
 
 use crate::{loader::Loader, utils::fs::get_sha1_hash};
 
 /// Download the latest version of `slug` to `mod_dir`
 ///
 /// the downloaded version is satisfied to `loaders` and `game_version`
-pub fn download_latest_mod<S: AsRef<str>, V: AsRef<str>>(
+pub fn download_latest_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
     slug: S,
     loader: Loader,
     game_version: V,
-    mod_dir: PathBuf,
-) {
+    dir: P,
+) -> Result<(), Box<dyn Error>> {
     let loaders = if let Loader::Quilt = loader {
         vec![Loader::Quilt, Loader::Fabric]
     } else {
         vec![loader]
     };
     let version = get_latest_version_from_slug(slug, loaders, game_version).unwrap();
-    version.download_to(mod_dir).unwrap();
+    download_version_file_blocking(version.get_primary_file(), dir)
+        .map_err(|err| format!("failed to download: {err}"))?;
+    Ok(())
 }
 
 /// Download the version `version_number` of `slug` to `mod_dir`
@@ -39,7 +37,7 @@ pub fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
     loader: Loader,
     game_version: S,
     dir: P,
-) {
+) -> Result<(), Box<dyn Error>> {
     let slug = slug.as_ref();
     let version_number = version_number.as_ref();
     let game_version = game_version.as_ref();
@@ -58,18 +56,21 @@ pub fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
             && v.game_versions.contains(&game_version.to_string())
     }) {
         Some(version) => {
-            let filename = version.get_filename();
-            if dir.join(filename).exists() {
-                println!("already exists, skipping...");
+            let version_file = version.get_primary_file();
+
+            if dir.join(&version_file.filename).exists() {
+                return Err("already exists".into());
             } else {
                 println!();
-                version.download_to(dir).unwrap()
+                download_version_file_blocking(version_file, dir)
+                    .map_err(|err| format!("failed to download: {err}"))?;
             }
         }
         None => {
-            println!("version not found, skipping...");
+            return Err("version not found".into());
         }
     }
+    Ok(())
 }
 
 /// Add a mod `slug`
@@ -90,7 +91,8 @@ pub fn add_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
         vec![loader]
     };
     let version = get_latest_version_from_slug(slug, loaders, game_version).unwrap();
-    version.download_to(dir)?;
+    download_version_file_blocking(version.get_primary_file(), dir)
+        .map_err(|err| format!("failed to download: {err}"))?;
     Ok((slug.to_string(), version.version_number))
 }
 
@@ -124,7 +126,8 @@ pub fn update_mod<P: AsRef<Path>, S: AsRef<str>>(
             cur_version.version_number,
             new_version.version_number
         );
-        if let Err(err) = new_version.download_to(dir) {
+        let version_file = new_version.get_primary_file();
+        if let Err(err) = download_version_file_blocking(version_file, dir) {
             cprintln!("<r>error</>: {err}");
         }
         // cprintln!("removing old version...");
@@ -235,13 +238,41 @@ pub fn get_latest_version_from_hash<H: AsRef<str>, V: AsRef<str>>(
     Ok(body)
 }
 
-mod types {
-    use std::path::Path;
+mod utils {
+    use std::{error::Error, path::Path};
 
-    use color_print::cprintln;
+    use crate::utils::download_from_url;
+
+    use super::types::VersionFile;
+
+    pub fn download_version_file_blocking<P: AsRef<Path>>(
+        version_file: &VersionFile,
+        dir: P,
+    ) -> Result<(), Box<dyn Error>> {
+        tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(download_version_file(version_file, dir))
+    }
+
+    pub async fn download_version_file<P: AsRef<Path>>(
+        version_file: &VersionFile,
+        dir: P,
+    ) -> Result<(), Box<dyn Error>> {
+        let dir = dir.as_ref();
+        let path = dir.join(&version_file.filename);
+        if path.exists() {
+            return Err("already exists".into());
+        }
+        download_from_url(&version_file.url, path, |_| {}).await
+    }
+}
+
+mod types {
     use serde::Deserialize;
 
-    use crate::{loader::Loader, utils::download};
+    use crate::loader::Loader;
 
     #[derive(Deserialize, Debug, PartialEq, Eq)]
     pub struct Project {
@@ -260,36 +291,11 @@ mod types {
     }
 
     impl Version {
-        pub fn get_filename(&self) -> String {
-            let version_file = self
-                .files
+        pub fn get_primary_file(&self) -> &VersionFile {
+            self.files
                 .iter()
                 .find(|f| f.primary)
-                .unwrap_or(self.files.first().unwrap());
-            version_file.filename.clone()
-        }
-
-        pub fn download_to<P: AsRef<Path>>(&self, dir: P) -> Result<(), String> {
-            let dir = dir.as_ref();
-
-            cprintln!(
-                "<dim>downloading {:?} {} = {} to {:?}...</>",
-                self.loaders,
-                self.name,
-                self.version_number,
-                dir
-            );
-            let mut version_file = self.files.first().unwrap();
-            if self.files.len() > 1 {
-                cprintln!("<dim>multiple files found, downloading primary one...</>");
-                if let Some(primary_version_file) = self.files.iter().find(|vf| vf.primary) {
-                    version_file = primary_version_file;
-                } else {
-                    cprintln!("<dim>no primary file found, downloading the first one...</>");
-                }
-            }
-            version_file.download_to(dir)?;
-            Ok(())
+                .unwrap_or(self.files.first().unwrap())
         }
     }
 
@@ -300,19 +306,6 @@ mod types {
         pub filename: String,
         pub primary: bool,
         pub size: i32,
-    }
-
-    impl VersionFile {
-        pub fn download_to<P: AsRef<Path>>(&self, dir: P) -> Result<(), String> {
-            let dir = dir.as_ref();
-
-            let local_path = dir.join(&self.filename);
-            if !local_path.exists() {
-                download(&self.url, local_path)
-                    .map_err(|err| format!("failed to download: {err}"))?;
-            }
-            Ok(())
-        }
     }
 
     #[derive(Deserialize, Debug, PartialEq, Eq)]

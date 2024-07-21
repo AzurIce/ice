@@ -11,7 +11,7 @@ use clap::ValueEnum;
 use log::info;
 use serde::{Deserialize, Serialize};
 
-use crate::utils::download;
+use crate::utils;
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 #[serde(rename_all = "lowercase")]
@@ -30,7 +30,7 @@ impl Display for Loader {
             Self::Fabric => "fabric",
             Self::Forge => "forge",
             Self::NeoForge => "neoforge",
-            Self::LiteLoader => "liteloader"
+            Self::LiteLoader => "liteloader",
         })
     }
 }
@@ -66,7 +66,7 @@ impl Loader {
             .last()
             .unwrap_or("quilt-installer");
         let installer_path = ice_dir.join(filename);
-        download(url.as_str(), &installer_path)?;
+        utils::download_from_url_blocking(url.as_str(), &installer_path, |_| {})?;
 
         info!("installing server");
         let success = Command::new("java")
@@ -106,7 +106,7 @@ impl Loader {
                     .unwrap_or("quilt-installer");
                 let path = Path::new(".ice").join(filename);
                 info!("downloading {filename} from {url} to {path:?}...");
-                download(url.as_str(), &path)?;
+                utils::download_from_url_blocking(url.as_str(), &path, |_| {})?;
 
                 info!("installing server");
                 let success = Command::new("java")
