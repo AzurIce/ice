@@ -5,8 +5,6 @@ use clap::{Parser, Subcommand};
 use ice_core::Loader;
 use std::env;
 
-use server::ServerCommands;
-
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub(crate) struct Cli {
@@ -45,6 +43,28 @@ enum ModCommands {
     Add { slugs: Vec<String> },
 }
 
+#[derive(Subcommand)]
+pub enum ServerCommands {
+    New {
+        name: String,
+
+        #[arg(short, long)]
+        version: Option<String>,
+
+        #[arg(short, long, default_value_t = Loader::Quilt, value_enum)]
+        loader: Loader,
+    },
+    Init {
+        #[arg(short, long)]
+        version: Option<String>,
+
+        #[arg(short, long, default_value_t = Loader::Quilt, value_enum)]
+        loader: Loader,
+    },
+    Install,
+    Run,
+}
+
 impl Cli {
     pub fn exec(self) {
         let current_dir = env::current_dir().expect("failed to get current_dir");
@@ -64,7 +84,24 @@ impl Cli {
                     modrinth::add(slugs, current_dir);
                 }
             },
-            Commands::Server { command } => command.exec(current_dir),
+            Commands::Server { command } => match command {
+                ServerCommands::New {
+                    name,
+                    version,
+                    loader,
+                } => {
+                    server::new(name, version, loader, current_dir);
+                }
+                ServerCommands::Init { version, loader } => {
+                    server::init(version, loader, current_dir);
+                }
+                ServerCommands::Install => {
+                    server::install(current_dir);
+                }
+                ServerCommands::Run => {
+                    server::run(current_dir);
+                }
+            },
         }
     }
 }

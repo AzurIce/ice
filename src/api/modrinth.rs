@@ -11,7 +11,7 @@ use utils::download_version_file_blocking;
 /// Download the latest version of `slug` to `mod_dir`
 ///
 /// the downloaded version is satisfied to `loaders` and `game_version`
-pub fn download_latest_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
+pub async fn download_latest_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
     slug: S,
     loader: Loader,
     game_version: V,
@@ -22,7 +22,7 @@ pub fn download_latest_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
     } else {
         vec![loader]
     };
-    let version = get_latest_version_from_slug(slug, loaders, game_version).unwrap();
+    let version = get_latest_version_from_slug(slug, loaders, game_version).await?;
     download_version_file_blocking(version.get_primary_file(), dir)
         .map_err(|err| format!("failed to download: {err}"))?;
     Ok(())
@@ -31,7 +31,7 @@ pub fn download_latest_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
 /// Download the version `version_number` of `slug` to `mod_dir`
 ///
 /// the downloaded version is satisfied to `loader`
-pub fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
+pub async fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
     slug: S,
     version_number: S,
     loader: Loader,
@@ -49,7 +49,7 @@ pub fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
     } else {
         vec![loader]
     };
-    let versions = get_project_versions(slug);
+    let versions = get_project_versions(slug).await?;
     match versions.iter().find(|v| {
         v.version_number == version_number
             && loaders.iter().any(|l| v.loaders.contains(l))
@@ -76,12 +76,12 @@ pub fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
 /// Add a mod `slug`
 ///
 /// use the latest version satisfies to `loader` and `game_version`
-pub fn add_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
+pub async fn add_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
     slug: S,
     loader: Loader,
     game_version: V,
     dir: P,
-) -> Result<(String, String), String> {
+) -> Result<(String, String), Box<dyn Error>> {
     let slug = slug.as_ref();
     let dir = dir.as_ref();
 
@@ -90,7 +90,7 @@ pub fn add_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
     } else {
         vec![loader]
     };
-    let version = get_latest_version_from_slug(slug, loaders, game_version).unwrap();
+    let version = get_latest_version_from_slug(slug, loaders, game_version).await?;
     download_version_file_blocking(version.get_primary_file(), dir)
         .map_err(|err| format!("failed to download: {err}"))?;
     Ok((slug.to_string(), version.version_number))
@@ -99,11 +99,11 @@ pub fn add_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
 /// Update the mod from `path`
 ///
 /// if success return the new version_number
-pub fn update_mod<P: AsRef<Path>, S: AsRef<str>>(
+pub async fn update_mod<P: AsRef<Path>, S: AsRef<str>>(
     path: P,
     loader: Loader,
     game_version: S,
-) -> Result<(String, String), String> {
+) -> Result<(String, String), Box<dyn Error>> {
     let path = path.as_ref();
     let dir = path.parent().unwrap();
 
@@ -114,9 +114,10 @@ pub fn update_mod<P: AsRef<Path>, S: AsRef<str>>(
         vec![loader]
     };
 
-    let cur_version = get_version_from_hash(&hash, HashMethod::Sha1)?;
-    let new_version = get_latest_version_from_hash(&hash, HashMethod::Sha1, loaders, game_version)?;
-    let project = get_project(&new_version.project_id);
+    let cur_version = get_version_from_hash(&hash, HashMethod::Sha1).await?;
+    let new_version =
+        get_latest_version_from_hash(&hash, HashMethod::Sha1, loaders, game_version).await?;
+    let project = get_project(&new_version.project_id).await?;
     cprint!("<g!>Updating</> {}...", project.slug);
     if cur_version == new_version {
         cprintln!("is already latest, no need to update, skipped.")
@@ -138,16 +139,93 @@ pub fn update_mod<P: AsRef<Path>, S: AsRef<str>>(
 
 const HOST: &str = "https://api.modrinth.com/v2";
 
-pub fn get_project<S: AsRef<str>>(id_or_slug: S) -> Project {
+pub async fn get_project<S: AsRef<str>>(id_or_slug: S) -> Result<Project, Box<dyn Error>> {
     let id_or_slug = id_or_slug.as_ref();
-    let res = reqwest::blocking::get(format!("{HOST}/project/{id_or_slug}")).unwrap();
-    res.json::<Project>().unwrap()
+
+    let res = reqwest::get(format!("{HOST}/project/{id_or_slug}")).await?;
+    let project = res.json::<Project>().await?;
+    Ok(project)
 }
 
-pub fn get_project_versions<S: AsRef<str>>(slug: S) -> Vec<Version> {
+pub async fn get_project_versions<S: AsRef<str>>(
+    id_or_slug: S,
+) -> Result<Vec<Version>, Box<dyn Error>> {
+    let slug = id_or_slug.as_ref();
+
+    let res = reqwest::get(format!("{HOST}/project/{slug}/version")).await?;
+    let versions = res.json::<Vec<Version>>().await?;
+    Ok(versions)
+}
+
+pub async fn get_version_from_hash<H: AsRef<str>>(
+    hash: H,
+    hash_method: HashMethod,
+) -> Result<Version, Box<dyn Error>> {
+    let hash = hash.as_ref();
+    let url = format!("{HOST}/version_file/{hash}");
+
+    let params = [("algorithm", hash_method.to_string())];
+    let url = reqwest::Url::parse_with_params(&url, params)
+        .map_err(|err| format!("failed to parse url: {err}"))?;
+    let res = reqwest::get(url).await?;
+    let version = res.json::<Version>().await?;
+    Ok(version)
+}
+
+/// Get the latest version of a mod from a hash
+///
+/// if the version supports on of the loaders, it will consider valid,
+/// same as game_version(current only on version is provided)
+pub async fn get_latest_version_from_hash<H: AsRef<str>, V: AsRef<str>>(
+    hash: H,
+    hash_method: HashMethod,
+    loaders: Vec<Loader>,
+    game_version: V,
+) -> Result<Version, Box<dyn Error>> {
+    let hash = hash.as_ref();
+    let game_version = game_version.as_ref();
+
+    let url = format!("{HOST}/version_file/{hash}/update");
+    let params = [("algorithm", hash_method.to_string())];
+    let url = reqwest::Url::parse_with_params(&url, params)
+        .map_err(|err| format!("failed to parse url: {err}"))?;
+
+    let client = reqwest::Client::new();
+    let res = client
+        .post(url)
+        .json(&json!({
+            "loaders": loaders,
+            "game_versions": [game_version],
+        }))
+        .send()
+        .await?;
+    let version = res.json::<Version>().await?;
+    Ok(version)
+}
+
+/// get the latest version of `slug`
+///
+/// if the version supports on of the loaders, it will consider valid,
+/// same as game_version(current only on version is provided)
+pub async fn get_latest_version_from_slug<S: AsRef<str>, V: AsRef<str>>(
+    slug: S,
+    loaders: Vec<Loader>,
+    game_version: V,
+) -> Result<Version, Box<dyn Error>> {
     let slug = slug.as_ref();
-    let res = reqwest::blocking::get(format!("{HOST}/project/{slug}/version")).unwrap();
-    res.json::<Vec<Version>>().unwrap()
+    let game_version = game_version.as_ref();
+
+    let versions = get_project_versions(slug).await?;
+    versions
+        .into_iter()
+        .find(|v| {
+            v.game_versions.contains(&game_version.to_string())
+                && (loaders.iter().any(|l| v.loaders.contains(l)))
+        })
+        .ok_or(
+            format!("cannot find a version of {slug} satisfied {loaders:?} and {game_version}")
+                .into(),
+        )
 }
 
 #[derive(Debug, Serialize)]
@@ -164,78 +242,6 @@ impl Display for HashMethod {
             HashMethod::Sha512 => "sha512",
         })
     }
-}
-
-pub fn get_version_from_hash<S: AsRef<str>>(
-    hash: S,
-    hash_method: HashMethod,
-) -> Result<Version, String> {
-    let hash = hash.as_ref();
-    let url = format!("{HOST}/version_file/{hash}");
-    let params = [("algorithm", hash_method.to_string())];
-    let url = reqwest::Url::parse_with_params(&url, params)
-        .map_err(|err| format!("failed to parse url: {err}"))?;
-    let body = reqwest::blocking::get(url)
-        .unwrap()
-        .json::<Version>()
-        .unwrap();
-    Ok(body)
-}
-
-/// get the latest version of `slug`
-///
-/// if the version supports on of the loaders, it will consider valid,
-/// same as game_version(current only on version is provided)
-pub fn get_latest_version_from_slug<S: AsRef<str>, V: AsRef<str>>(
-    slug: S,
-    loaders: Vec<Loader>,
-    game_version: V,
-) -> Result<Version, String> {
-    let slug = slug.as_ref();
-    let game_version = game_version.as_ref();
-
-    let versions = get_project_versions(slug);
-    versions
-        .into_iter()
-        .find(|v| {
-            v.game_versions.contains(&game_version.to_string())
-                && (loaders.iter().any(|l| v.loaders.contains(l)))
-        })
-        .ok_or(format!(
-            "cannot find a version of {slug} satisfied {loaders:?} and {game_version}"
-        ))
-}
-
-/// get the latest version of a mod from a hash
-///
-/// if the version supports on of the loaders, it will consider valid,
-/// same as game_version(current only on version is provided)
-pub fn get_latest_version_from_hash<H: AsRef<str>, V: AsRef<str>>(
-    hash: H,
-    hash_method: HashMethod,
-    loaders: Vec<Loader>,
-    game_version: V,
-) -> Result<Version, String> {
-    let hash = hash.as_ref();
-    let game_version = game_version.as_ref();
-
-    let url = format!("{HOST}/version_file/{hash}/update");
-    let params = [("algorithm", hash_method.to_string())];
-    let url = reqwest::Url::parse_with_params(&url, params)
-        .map_err(|err| format!("failed to parse url: {err}"))?;
-
-    let client = reqwest::blocking::Client::new();
-    let res = client
-        .post(url)
-        .json(&json!({
-            "loaders": loaders,
-            "game_versions": [game_version],
-        }))
-        .send()
-        .unwrap();
-    // println!("{res:?}");
-    let body = res.json::<Version>().unwrap();
-    Ok(body)
 }
 
 mod utils {
@@ -343,39 +349,35 @@ mod test {
         }
     }
 
-    #[test]
-    fn test_get_project_versions() {
-        let versions = get_project_versions("iris");
+    #[tokio::test]
+    async fn test_get_project_versions() {
+        let versions = get_project_versions("iris").await;
         println!("{versions:?}")
     }
 
-    #[test]
-    fn test_get_version_from_hash() {
+    #[tokio::test]
+    async fn test_get_version_from_hash() {
         let version_sha1 =
-            get_version_from_hash(&iris_version().files[0].hashes.sha1, HashMethod::Sha1).unwrap();
+            get_version_from_hash(&iris_version().files[0].hashes.sha1, HashMethod::Sha1)
+                .await
+                .unwrap();
         let version_sha512 =
             get_version_from_hash(&iris_version().files[0].hashes.sha512, HashMethod::Sha512)
+                .await
                 .unwrap();
         assert_eq!(version_sha1, version_sha512);
     }
 
-    #[test]
-    fn test_get_latest_version_from_hash() {
+    #[tokio::test]
+    async fn test_get_latest_version_from_hash() {
         let hashes = &iris_version().files[0].hashes;
         let version = get_latest_version_from_hash(
             &hashes.sha1,
             HashMethod::Sha1,
             vec![Loader::Quilt],
             "1.21",
-        );
+        )
+        .await;
         println!("{version:?}");
-    }
-
-    #[test]
-    fn f() {
-        // let res = get_project_versions("fabric-api");
-        // println!("{:?}", res)
-        let s = serde_json::to_string(&HashMethod::Sha1).unwrap();
-        println!("{s:?}")
     }
 }

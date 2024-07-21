@@ -12,7 +12,15 @@ use ice_core::Loader;
 use ice_util::fs::get_sha1_hash;
 use log::info;
 
-pub fn init<P: AsRef<Path>, S: AsRef<str>>(version: Option<S>, loader: Loader, current_dir: P) {
+/// Initialize a `mods.toml` under `current_dir`
+///
+/// if `version` is `None` then it will default to the latest release
+#[tokio::main]
+pub async fn init<P: AsRef<Path>, S: AsRef<str>>(
+    version: Option<S>,
+    loader: Loader,
+    current_dir: P,
+) {
     let version = version.map(|s| s.as_ref().to_string());
     let current_dir = current_dir.as_ref();
 
@@ -23,13 +31,14 @@ pub fn init<P: AsRef<Path>, S: AsRef<str>>(version: Option<S>, loader: Loader, c
     }
 
     let config = ModConfig::new(
-        version.unwrap_or(api::mojang::get_latest_version().unwrap()),
+        version.unwrap_or(api::mojang::get_latest_version().await.unwrap()),
         loader,
     );
     config.save(current_dir.join("mods.toml")).unwrap();
 }
 
-pub fn sync<P: AsRef<Path>>(current_dir: P) {
+#[tokio::main]
+pub async fn sync<P: AsRef<Path>>(current_dir: P) {
     let current_dir = current_dir.as_ref();
 
     info!("loading mods.toml...");
@@ -50,15 +59,20 @@ pub fn sync<P: AsRef<Path>>(current_dir: P) {
         if path.extension().unwrap() == "jar" {
             let hash = get_sha1_hash(&path).unwrap();
             // If it is a modrinth mod
-            if let Ok(version) = api::modrinth::get_version_from_hash(hash, HashMethod::Sha1) {
-                let project = api::modrinth::get_project(version.project_id);
+            if let Ok(version) = api::modrinth::get_version_from_hash(hash, HashMethod::Sha1).await
+            {
+                let project = api::modrinth::get_project(version.project_id)
+                    .await
+                    .unwrap();
                 if let Some(version_number) = config.mods.get(&project.slug) {
                     // Update if version is incorrect
                     if version_number != &version.version_number
                         || !loaders.iter().any(|l| version.loaders.contains(l))
                         || !version.game_versions.contains(&config.version)
                     {
-                        api::modrinth::update_mod(&path, config.loader, &config.version).unwrap();
+                        api::modrinth::update_mod(&path, config.loader, &config.version)
+                            .await
+                            .unwrap();
                     }
                     done_mods.insert(project.slug);
                 } else {
@@ -82,7 +96,9 @@ pub fn sync<P: AsRef<Path>>(current_dir: P) {
             config.loader,
             &config.version,
             current_dir,
-        ) {
+        )
+        .await
+        {
             cprintln!(
                 "<r!>Error</> failed to download {} = {}: {}",
                 mod_name,
@@ -93,7 +109,8 @@ pub fn sync<P: AsRef<Path>>(current_dir: P) {
     }
 }
 
-pub fn update<P: AsRef<Path>>(current_dir: P) {
+#[tokio::main]
+pub async fn update<P: AsRef<Path>>(current_dir: P) {
     let current_dir = current_dir.as_ref();
 
     info!("loading mods.toml...");
@@ -105,7 +122,7 @@ pub fn update<P: AsRef<Path>>(current_dir: P) {
         let path = file.path();
         if path.extension().unwrap() == "jar" {
             if let Ok((slug, version)) =
-                api::modrinth::update_mod(path, config.loader, &config.version)
+                api::modrinth::update_mod(path, config.loader, &config.version).await
             {
                 config.insert_mod(slug, version);
             }
@@ -117,7 +134,8 @@ pub fn update<P: AsRef<Path>>(current_dir: P) {
     cprintln!("done!")
 }
 
-pub fn add<P: AsRef<Path>>(slugs: Vec<String>, current_dir: P) {
+#[tokio::main]
+pub async fn add<P: AsRef<Path>>(slugs: Vec<String>, current_dir: P) {
     let current_dir = current_dir.as_ref();
 
     info!("loading mods.toml...");
@@ -130,7 +148,7 @@ pub fn add<P: AsRef<Path>>(slugs: Vec<String>, current_dir: P) {
             return;
         }
         cprintln!();
-        match add_mod(slug, config.loader, config.version.clone(), current_dir) {
+        match add_mod(slug, config.loader, config.version.clone(), current_dir).await {
             Ok((slug, version)) => {
                 config.insert_mod(slug, version);
                 config.save(current_dir.join("mods.toml")).unwrap();
