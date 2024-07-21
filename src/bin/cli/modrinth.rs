@@ -7,9 +7,9 @@ use ice::{
         modrinth::{add_mod, HashMethod},
     },
     config::mod_config::ModConfig,
-    loader::Loader,
-    utils::fs::get_sha1_hash,
 };
+use ice_core::Loader;
+use ice_util::fs::get_sha1_hash;
 use log::info;
 
 pub fn init<P: AsRef<Path>, S: AsRef<str>>(version: Option<S>, loader: Loader, current_dir: P) {

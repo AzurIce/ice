@@ -1,3 +1,4 @@
+
 use std::{
     error::Error,
     fmt::{self, Display, Formatter},
@@ -7,13 +8,12 @@ use std::{
     process::Command,
 };
 
-use clap::ValueEnum;
+use ice_util::download_from_url_blocking;
 use log::info;
 use serde::{Deserialize, Serialize};
 
-use crate::utils;
-
-#[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+#[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 #[serde(rename_all = "lowercase")]
 pub enum Loader {
     Quilt,
@@ -22,6 +22,7 @@ pub enum Loader {
     NeoForge,
     LiteLoader,
 }
+
 
 impl Display for Loader {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -66,7 +67,7 @@ impl Loader {
             .last()
             .unwrap_or("quilt-installer");
         let installer_path = ice_dir.join(filename);
-        utils::download_from_url_blocking(url.as_str(), &installer_path, |_| {})?;
+        download_from_url_blocking(url.as_str(), &installer_path, |_| {})?;
 
         info!("installing server");
         let success = Command::new("java")
@@ -106,7 +107,7 @@ impl Loader {
                     .unwrap_or("quilt-installer");
                 let path = Path::new(".ice").join(filename);
                 info!("downloading {filename} from {url} to {path:?}...");
-                utils::download_from_url_blocking(url.as_str(), &path, |_| {})?;
+                download_from_url_blocking(url.as_str(), &path, |_| {})?;
 
                 info!("installing server");
                 let success = Command::new("java")

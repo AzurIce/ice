@@ -1,12 +1,12 @@
 use std::{error::Error, fmt::Display, fs, path::Path, vec};
 
 use color_print::{cprint, cprintln};
+use ice_core::Loader;
+use ice_util::fs::get_sha1_hash;
 use serde::Serialize;
 use serde_json::json;
 use types::{Project, Version};
 use utils::download_version_file_blocking;
-
-use crate::{loader::Loader, utils::fs::get_sha1_hash};
 
 /// Download the latest version of `slug` to `mod_dir`
 ///
@@ -241,7 +241,7 @@ pub fn get_latest_version_from_hash<H: AsRef<str>, V: AsRef<str>>(
 mod utils {
     use std::{error::Error, path::Path};
 
-    use crate::utils::download_from_url;
+    use ice_util::download_from_url;
 
     use super::types::VersionFile;
 
@@ -270,9 +270,8 @@ mod utils {
 }
 
 mod types {
+    use ice_core::Loader;
     use serde::Deserialize;
-
-    use crate::loader::Loader;
 
     #[derive(Deserialize, Debug, PartialEq, Eq)]
     pub struct Project {
@@ -320,7 +319,6 @@ mod test {
     use super::types::*;
     use super::*;
     use super::{get_project_versions, HashMethod};
-    use crate::loader::Loader;
 
     fn iris_version() -> Version {
         Version {

@@ -1,9 +1,8 @@
 use std::{collections::HashMap, fs, path::Path};
 
+use ice_core::Loader;
 use serde::{Deserialize, Serialize};
 use toml_edit::{value, DocumentMut};
-
-use crate::loader::Loader;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModConfig {
