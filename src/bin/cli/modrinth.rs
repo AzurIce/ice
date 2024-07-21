@@ -5,11 +5,13 @@ use std::{
     sync::Arc,
 };
 
-use color_print::{cformat, cprint, cprintln};
+use color_print::{cprint, cprintln};
 use ice::{
     api::{
         self,
-        modrinth::{add_mod, get_project_versions, utils::download_version_file, HashMethod},
+        modrinth::{
+            add_mod, get_project_versions, types::Version, utils::download_version_file, HashMethod,
+        },
     },
     config::ModConfig,
 };
@@ -52,35 +54,15 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P) {
 
     let mut synced_mods = HashSet::<String>::new();
 
-    // Get modrinth files
-    let jar_files = get_jar_files(current_dir);
-    let mut join_set = JoinSet::new();
-    for f in jar_files {
-        join_set.spawn(async {
-            let path = f.path();
-            let hash = tokio::task::spawn_blocking(|| get_sha1_hash(path).unwrap())
-                .await
-                .unwrap();
-            let version = api::modrinth::get_version_from_hash(&hash, HashMethod::Sha1).await;
-            version.map(|v| (f, hash, v)).ok()
-        });
-    }
-    let mut modrinth_files = vec![];
-    while let Some(res) = join_set.join_next().await {
-        let res = res.unwrap();
-        if let Some(res) = res {
-            modrinth_files.push(res)
-        }
-    }
-
     let loaders = if let Loader::Quilt = config.loader {
         vec![Loader::Quilt, Loader::Fabric]
     } else {
         vec![config.loader]
     };
     let game_version = config.version.clone();
-    // Check every .jar file in the dir
+    let mods = Arc::new(config.mods.clone());
 
+    //? Sync modrinth files
     enum SyncRes {
         Update(String, String),
         Remove(PathBuf),
@@ -88,13 +70,14 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P) {
     }
     let mut join_set = JoinSet::<Result<SyncRes, String>>::new();
 
-    let mods = Arc::new(config.mods.clone());
+    let modrinth_files = get_modrinth_files(current_dir).await;
     for (file, hash, cur_version) in modrinth_files {
-        let current_dir = current_dir.to_owned();
-        let game_version = game_version.clone();
         let loaders = loaders.clone();
-        let path = file.path();
+        let game_version = game_version.clone();
         let mods = mods.clone();
+
+        let path = file.path();
+        let current_dir = current_dir.to_owned();
         join_set.spawn(async move {
             let project = api::modrinth::get_project(cur_version.project_id)
                 .await
@@ -159,18 +142,19 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P) {
         }
     }
 
-    // Download other mods
+    //? Download other mods
     let mut join_set = JoinSet::<Result<(String, String), String>>::new();
     for (slug, version_number) in mods.iter().filter(|(k, _)| !synced_mods.contains(*k)) {
-        let slug = slug.to_owned();
-        let version_number = version_number.to_owned();
         let loaders = loaders.clone();
         let game_version = game_version.clone();
+
+        let slug = slug.to_owned();
+        let version_number = version_number.to_owned();
         let current_dir = current_dir.to_owned();
         join_set.spawn(async move {
             let versions = get_project_versions(&slug, Some(&loaders), Some(game_version.clone()))
                 .await
-                .unwrap();
+                .map_err(|err| format!("failed to get project versions: {err}"))?;
             if let Some(version) = versions
                 .into_iter()
                 .find(|v| v.version_number == version_number)
@@ -180,20 +164,20 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P) {
                 download_version_file(&version_file, &path).await.unwrap();
                 Ok((slug, version_number))
             } else {
-                Err(cformat!(
-                    "<r!>Error</> failed to find version {} = {}",
-                    slug,
-                    version_number
-                )
-                .into())
+                Err(format!("failed to find version {} = {}", slug, version_number).into())
             }
         });
     }
     while let Some(res) = join_set.join_next().await {
         let res = res.unwrap();
-        if let Ok((slug, version_number)) = res {
-            synced_mods.insert(slug.clone());
-            cprintln!("<g>Downloaded</> {} = {}", slug, version_number);
+        match res {
+            Ok((slug, version_number)) => {
+                synced_mods.insert(slug.clone());
+                cprintln!("<g>Downloaded</> {} = {}", slug, version_number);
+            }
+            Err(err) => {
+                cprintln!("<r>Failed</> {err}")
+            }
         }
     }
 }
@@ -254,4 +238,28 @@ fn get_jar_files(dir: &Path) -> Vec<DirEntry> {
         .filter_map(|entry| entry.ok())
         .filter(|entry| entry.path().extension().unwrap() == "jar")
         .collect::<Vec<DirEntry>>()
+}
+
+async fn get_modrinth_files(dir: &Path) -> Vec<(DirEntry, String, Version)> {
+    //? Get modrinth files
+    let jar_files = get_jar_files(dir);
+    let mut join_set = JoinSet::new();
+    for f in jar_files {
+        join_set.spawn(async {
+            let path = f.path();
+            let hash = tokio::task::spawn_blocking(|| get_sha1_hash(path).unwrap())
+                .await
+                .unwrap();
+            let version = api::modrinth::get_version_from_hash(&hash, HashMethod::Sha1).await;
+            version.map(|v| (f, hash, v)).ok()
+        });
+    }
+    let mut modrinth_files = vec![];
+    while let Some(res) = join_set.join_next().await {
+        let res = res.unwrap();
+        if let Some(res) = res {
+            modrinth_files.push(res)
+        }
+    }
+    modrinth_files
 }
