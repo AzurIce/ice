@@ -3,90 +3,76 @@ use std::{
     path::Path,
 };
 
-use clap::Subcommand;
 use ice::api::mojang::get_latest_version;
 use ice_core::Loader;
 use ice_server::{config::Config, Core};
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
-#[derive(Subcommand)]
-pub(super) enum ServerCommands {
-    New {
-        name: String,
+#[tokio::main]
+pub async fn new<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
+    name: S,
+    version: Option<V>,
+    loader: Loader,
+    current_dir: P,
+) {
+    let name = name.as_ref();
+    let version = version.map(|s| s.as_ref().to_string());
+    let current_dir = current_dir.as_ref();
 
-        #[arg(short, long)]
-        version: Option<String>,
-
-        #[arg(short, long, default_value_t = Loader::Quilt, value_enum)]
-        loader: Loader,
-    },
-    Init {
-        #[arg(short, long)]
-        version: Option<String>,
-
-        #[arg(short, long, default_value_t = Loader::Quilt, value_enum)]
-        loader: Loader,
-    },
-    Install,
-    Run,
+    let version = version.unwrap_or(get_latest_version().await.unwrap());
+    let dir = current_dir.join(&name);
+    create_dir(&dir).unwrap();
+    init_dir(dir, version, loader);
 }
 
-impl ServerCommands {
-    pub fn exec<P: AsRef<Path>>(self, current_dir: P) {
-        let current_dir = current_dir.as_ref();
-        match self {
-            Self::New {
-                name,
-                version,
-                loader,
-            } => {
-                let version = version.unwrap_or(get_latest_version().unwrap());
-                let dir = current_dir.join(&name);
-                create_dir(&dir).unwrap();
-                init_dir(dir, version, loader);
-            }
-            Self::Init { version, loader } => {
-                let version = version.unwrap_or(get_latest_version().unwrap());
-                init_dir(current_dir, &version, loader);
-            }
-            Self::Install => {
-                let config = Config::load(current_dir.join("Ice.toml")).unwrap();
-                if config.loader.installed(current_dir) {
-                    println!("already intalled")
-                } else {
-                    config
-                        .loader
-                        .install(current_dir, config.version.clone())
-                        .expect("failed to install");
-                }
-            }
-            Self::Run => {
-                // a builder for `FmtSubscriber`.
-                let subscriber = FmtSubscriber::builder()
-                    // all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)
-                    // will be written to stdout.
-                    .with_max_level(Level::TRACE)
-                    // completes the builder.
-                    .finish();
+#[tokio::main]
+pub async fn init<S: AsRef<str>, P: AsRef<Path>>(
+    version: Option<S>,
+    loader: Loader,
+    current_dir: P,
+) {
+    let version = version.map(|s| s.as_ref().to_string());
 
-                tracing::subscriber::set_global_default(subscriber)
-                    .expect("setting default subscriber failed");
+    let version = version.unwrap_or(get_latest_version().await.unwrap());
+    init_dir(current_dir, &version, loader);
+}
 
-                let config = Config::load(current_dir.join("Ice.toml")).unwrap();
-                if !config.loader.installed(current_dir) {
-                    println!("server not installed, use `ice server install` to install server");
-                    return;
-                }
-
-                info!("checking mods...");
-                // TODO: check mods
-
-                info!("the core is running...");
-                Core::run(config, current_dir.join("server"))
-            }
-        }
+pub fn install<P: AsRef<Path>>(current_dir: P) {
+    let current_dir = current_dir.as_ref();
+    let config = Config::load(current_dir.join("Ice.toml")).unwrap();
+    if config.loader.installed(current_dir) {
+        println!("already intalled")
+    } else {
+        config
+            .loader
+            .install(current_dir, config.version.clone())
+            .expect("failed to install");
     }
+}
+pub fn run<P: AsRef<Path>>(current_dir: P) {
+    let current_dir = current_dir.as_ref();
+    // a builder for `FmtSubscriber`.
+    let subscriber = FmtSubscriber::builder()
+        // all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)
+        // will be written to stdout.
+        .with_max_level(Level::TRACE)
+        // completes the builder.
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+
+    let config = Config::load(current_dir.join("Ice.toml")).unwrap();
+    if !config.loader.installed(current_dir) {
+        println!("server not installed, use `ice server install` to install server");
+        return;
+    }
+
+    info!("checking mods...");
+    // TODO: check mods
+
+    info!("the core is running...");
+    Core::run(config, current_dir.join("server"))
 }
 
 pub fn init_dir<P: AsRef<Path>, S: AsRef<str>>(dir: P, version: S, loader: Loader) {

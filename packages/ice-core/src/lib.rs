@@ -1,4 +1,3 @@
-
 use std::{
     error::Error,
     fmt::{self, Display, Formatter},
@@ -22,7 +21,6 @@ pub enum Loader {
     NeoForge,
     LiteLoader,
 }
-
 
 impl Display for Loader {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
