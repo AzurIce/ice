@@ -6,7 +6,7 @@ use ice::{
         self,
         modrinth::{add_mod, HashMethod},
     },
-    config::mod_config::ModConfig,
+    config::ModConfig,
 };
 use ice_core::Loader;
 use ice_util::fs::get_sha1_hash;
