@@ -1,4 +1,4 @@
-use std::{fs, io, path::Path, time::Instant};
+use std::{fs, io, path::Path};
 
 use sha::{
     sha1::Sha1,
