@@ -50,7 +50,7 @@ pub async fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
     } else {
         vec![loader]
     };
-    let versions = get_project_versions(slug).await?;
+    let versions = get_project_versions(slug, None, None).await?;
     match versions.iter().find(|v| {
         v.version_number == version_number
             && loaders.iter().any(|l| v.loaders.contains(l))
@@ -152,10 +152,30 @@ pub async fn get_project<S: AsRef<str>>(id_or_slug: S) -> Result<Project, Box<dy
 
 pub async fn get_project_versions<S: AsRef<str>>(
     id_or_slug: S,
+    loaders: Option<&Vec<Loader>>,
+    game_version: Option<String>,
 ) -> Result<Vec<Version>, Box<dyn Error>> {
     let slug = id_or_slug.as_ref();
+    let url = format!("{HOST}/project/{slug}/version");
+    let mut params = vec![];
+    if let Some(loaders) = loaders {
+        params.push(("loaders", serde_json::to_string(loaders).unwrap()));
+    }
+    if let Some(game_version) = game_version {
+        params.push((
+            "game_versions",
+            format!(
+                "[{}]",
+                vec![game_version]
+                    .into_iter()
+                    .map(|s| format!(r#""{s}""#))
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            ),
+        ))
+    }
 
-    let res = reqwest::get(format!("{HOST}/project/{slug}/version")).await?;
+    let res = reqwest::get(url).await?;
     let versions = res.json::<Vec<Version>>().await?;
     Ok(versions)
 }
@@ -218,7 +238,7 @@ pub async fn get_latest_version_from_slug<S: AsRef<str>, V: AsRef<str>>(
     let slug = slug.as_ref();
     let game_version = game_version.as_ref();
 
-    let versions = get_project_versions(slug).await?;
+    let versions = get_project_versions(slug, None, None).await?;
     versions
         .into_iter()
         .find(|v| {
@@ -343,8 +363,13 @@ mod test {
 
     #[tokio::test]
     async fn test_get_project_versions() {
-        let versions = get_project_versions("iris").await;
-        println!("{versions:?}")
+        let versions = get_project_versions(
+            "iris",
+            Some(&vec![Loader::Quilt, Loader::Fabric]),
+            Some("1.20.1".to_string()),
+        )
+        .await;
+        // println!("{versions:?}")
     }
 
     #[tokio::test]
