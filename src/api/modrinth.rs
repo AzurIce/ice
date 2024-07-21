@@ -6,7 +6,7 @@ use ice_util::fs::get_sha1_hash;
 use serde::Serialize;
 use serde_json::json;
 use types::{Project, Version};
-use utils::download_version_file_blocking;
+use utils::download_version_file;
 
 /// Download the latest version of `slug` to `mod_dir`
 ///
@@ -23,7 +23,8 @@ pub async fn download_latest_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
         vec![loader]
     };
     let version = get_latest_version_from_slug(slug, loaders, game_version).await?;
-    download_version_file_blocking(version.get_primary_file(), dir)
+    download_version_file(version.get_primary_file(), dir)
+        .await
         .map_err(|err| format!("failed to download: {err}"))?;
     Ok(())
 }
@@ -62,7 +63,8 @@ pub async fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
                 return Err("already exists".into());
             } else {
                 println!();
-                download_version_file_blocking(version_file, dir)
+                download_version_file(version_file, dir)
+                    .await
                     .map_err(|err| format!("failed to download: {err}"))?;
             }
         }
@@ -91,7 +93,8 @@ pub async fn add_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
         vec![loader]
     };
     let version = get_latest_version_from_slug(slug, loaders, game_version).await?;
-    download_version_file_blocking(version.get_primary_file(), dir)
+    download_version_file(version.get_primary_file(), dir)
+        .await
         .map_err(|err| format!("failed to download: {err}"))?;
     Ok((slug.to_string(), version.version_number))
 }
@@ -116,7 +119,7 @@ pub async fn update_mod<P: AsRef<Path>, S: AsRef<str>>(
 
     let cur_version = get_version_from_hash(&hash, HashMethod::Sha1).await?;
     let new_version =
-        get_latest_version_from_hash(&hash, HashMethod::Sha1, loaders, game_version).await?;
+        get_latest_version_from_hash(&hash, HashMethod::Sha1, &loaders, game_version).await?;
     let project = get_project(&new_version.project_id).await?;
     cprint!("<g!>Updating</> {}...", project.slug);
     if cur_version == new_version {
@@ -128,7 +131,7 @@ pub async fn update_mod<P: AsRef<Path>, S: AsRef<str>>(
             new_version.version_number
         );
         let version_file = new_version.get_primary_file();
-        if let Err(err) = download_version_file_blocking(version_file, dir) {
+        if let Err(err) = download_version_file(version_file, dir).await {
             cprintln!("<r>error</>: {err}");
         }
         // cprintln!("removing old version...");
@@ -179,7 +182,7 @@ pub async fn get_version_from_hash<H: AsRef<str>>(
 pub async fn get_latest_version_from_hash<H: AsRef<str>, V: AsRef<str>>(
     hash: H,
     hash_method: HashMethod,
-    loaders: Vec<Loader>,
+    loaders: &Vec<Loader>,
     game_version: V,
 ) -> Result<Version, Box<dyn Error>> {
     let hash = hash.as_ref();
@@ -244,23 +247,12 @@ impl Display for HashMethod {
     }
 }
 
-mod utils {
+pub mod utils {
     use std::{error::Error, path::Path};
 
     use ice_util::download_from_url;
 
     use super::types::VersionFile;
-
-    pub fn download_version_file_blocking<P: AsRef<Path>>(
-        version_file: &VersionFile,
-        dir: P,
-    ) -> Result<(), Box<dyn Error>> {
-        tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .unwrap()
-            .block_on(download_version_file(version_file, dir))
-    }
 
     pub async fn download_version_file<P: AsRef<Path>>(
         version_file: &VersionFile,
@@ -275,7 +267,7 @@ mod utils {
     }
 }
 
-mod types {
+pub mod types {
     use ice_core::Loader;
     use serde::Deserialize;
 
@@ -374,7 +366,7 @@ mod test {
         let version = get_latest_version_from_hash(
             &hashes.sha1,
             HashMethod::Sha1,
-            vec![Loader::Quilt],
+            &vec![Loader::Quilt],
             "1.21",
         )
         .await;
