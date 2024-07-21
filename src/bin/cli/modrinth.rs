@@ -5,13 +5,13 @@ use std::{
     sync::Arc,
 };
 
-use color_print::{cprintln};
+use color_print::cprintln;
 use ice::{
     api::{
         self,
         modrinth::{
-            get_latest_version_from_slug, get_project_versions, types::Version,
-            utils::download_version_file, HashMethod,
+            get_latest_version_from_hash, get_latest_version_from_slug, get_project_versions,
+            types::Version, utils::download_version_file, HashMethod,
         },
     },
     config::ModConfig,
@@ -189,20 +189,67 @@ pub async fn update<P: AsRef<Path>>(current_dir: P) {
 
     let mut config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
 
-    for file in fs::read_dir(current_dir).unwrap() {
-        let file = file.unwrap();
+    let loaders = if let Loader::Quilt = config.loader {
+        vec![Loader::Quilt, Loader::Fabric]
+    } else {
+        vec![config.loader]
+    };
+    let game_version = config.version.clone();
+
+    let modrinth_files = get_modrinth_files(current_dir).await;
+
+    enum UpdateRes {
+        Updated(String, String),
+        Unchanged(String, String),
+    }
+
+    let mut join_set = JoinSet::<Result<UpdateRes, String>>::new();
+    for (file, hash, cur_version) in modrinth_files {
+        let loaders = loaders.clone();
+        let game_version = game_version.clone();
         let path = file.path();
-        if path.extension().unwrap() == "jar" {
-            if let Ok((slug, version)) =
-                api::modrinth::update_mod(path, config.loader, &config.version).await
-            {
-                config.insert_mod(slug, version);
+        join_set.spawn(async move {
+            let project = api::modrinth::get_project(cur_version.project_id)
+                .await
+                .map_err(|err| format!("failed to get project: {err}"))?;
+            let version =
+                get_latest_version_from_hash(hash, HashMethod::Sha1, &loaders, game_version)
+                    .await
+                    .map_err(|err| format!("failed to get latest version: {err}"))?;
+            if version.id == cur_version.id {
+                Ok(UpdateRes::Unchanged(
+                    project.slug,
+                    cur_version.version_number,
+                ))
+            } else {
+                let version_file = version.get_primary_file();
+                download_version_file(&version_file, &file.path())
+                    .await
+                    .unwrap();
+                remove_file(path).unwrap();
+                Ok(UpdateRes::Updated(project.slug, cur_version.version_number))
+            }
+        });
+    }
+    while let Some(res) = join_set.join_next().await {
+        let res = res.unwrap();
+        match res {
+            Ok(res) => match res {
+                UpdateRes::Updated(slug, version) => {
+                    config.insert_mod(slug.clone(), version.clone());
+                    config.save(current_dir.join("mods.toml")).unwrap();
+                    cprintln!("<g>Updated</> {} = {}", slug, version);
+                }
+                UpdateRes::Unchanged(slug, version) => {
+                    cprintln!("<y>Unchanged</> {} = {}", slug, version);
+                }
+            },
+            Err(err) => {
+                cprintln!("<r>Failed</> {err}")
             }
         }
     }
 
-    cprintln!("updating mods.toml...");
-    config.save(current_dir.join("mods.toml")).unwrap();
     cprintln!("done!")
 }
 
