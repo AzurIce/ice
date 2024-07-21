@@ -369,7 +369,7 @@ mod test {
             Some("1.20.1".to_string()),
         )
         .await;
-        // println!("{versions:?}")
+        println!("{versions:?}")
     }
 
     #[tokio::test]
