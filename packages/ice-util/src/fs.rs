@@ -1,4 +1,4 @@
-use std::{fs, io, path::Path};
+use std::{fs, io, path::Path, time::Instant};
 
 use sha::{
     sha1::Sha1,
@@ -9,7 +9,7 @@ use sha::{
 /// get sha1 hash of a file
 pub fn get_sha1_hash<P: AsRef<Path>>(path: P) -> Result<String, io::Error> {
     let bytes = fs::read(path)?;
-    let res = Sha1::default().digest(&bytes).to_hex();
+    let res = Sha1::default().digest(&bytes).to_hex(); // main cost, for big file may up to 8 secs
     Ok(res)
 }
 
