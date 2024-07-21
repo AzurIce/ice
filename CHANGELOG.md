@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.7](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.6..0.1.0-alpha.7) - 2024-07-21
+
+### <!-- 0 -->🎈 Features
+
+
+- Support adding multiple mods - ([8ebeea6](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/8ebeea668a01cdf0154b5006cfd238c055c41345))
+
+### <!-- 3 -->📚 Documentation
+
+
+- Update README.md - ([d9f4b07](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/d9f4b074526c0eb7ee64832940c284f91ab48abb))
+
 ## [0.1.0-alpha.6](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.5..0.1.0-alpha.6) - 2024-07-21
 
 ### <!-- 5 -->🎨 Styling
