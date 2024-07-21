@@ -1,10 +1,15 @@
-use std::{collections::HashSet, fs, path::Path};
+use std::{
+    collections::HashSet,
+    fs::{self, remove_file, DirEntry},
+    path::Path,
+};
 
 use color_print::{cprint, cprintln};
+use futures::StreamExt;
 use ice::{
     api::{
         self,
-        modrinth::{add_mod, HashMethod},
+        modrinth::{add_mod, types::Version, utils::download_version_file, HashMethod},
     },
     config::ModConfig,
 };
@@ -43,53 +48,77 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P) {
 
     info!("loading mods.toml...");
     let config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
+
+    let mut synced_mods = HashSet::<String>::new();
+
+    let jar_files = get_jar_files(current_dir);
+    let modrinth_files = tokio_stream::iter(jar_files.into_iter())
+        .filter_map(|f| async {
+            let hash = get_sha1_hash(&f.path()).unwrap();
+            let version = api::modrinth::get_version_from_hash(&hash, HashMethod::Sha1).await;
+            if version.is_err() {
+                return None;
+            }
+
+            Some((f, hash, version.unwrap()))
+        })
+        .collect::<Vec<(DirEntry, String, Version)>>()
+        .await;
+
     let loaders = if let Loader::Quilt = config.loader {
         vec![Loader::Quilt, Loader::Fabric]
     } else {
         vec![config.loader]
     };
-
-    let mut done_mods = HashSet::<String>::new();
-
+    let game_version = config.version.clone();
     // Check every .jar file in the dir
-    for file in fs::read_dir(current_dir).unwrap() {
-        let file = file.unwrap();
+    for (file, hash, cur_version) in modrinth_files {
         let path = file.path();
+
         cprintln!("<b>Checking</b> {}...", file.file_name().to_str().unwrap());
-        if path.extension().unwrap() == "jar" {
-            let hash = get_sha1_hash(&path).unwrap();
-            // If it is a modrinth mod
-            if let Ok(version) = api::modrinth::get_version_from_hash(hash, HashMethod::Sha1).await
-            {
-                let project = api::modrinth::get_project(version.project_id)
+        // If it is a modrinth mod
+        let project = api::modrinth::get_project(cur_version.project_id)
+            .await
+            .unwrap();
+        match config.mods.get(&project.slug) {
+            // Update if version is incorrect
+            Some(version_number) => {
+                if version_number != &cur_version.version_number
+                    || !loaders.iter().any(|l| cur_version.loaders.contains(l))
+                    || !cur_version.game_versions.contains(&config.version)
+                {
+                    let latest_version = api::modrinth::get_latest_version_from_hash(
+                        hash,
+                        HashMethod::Sha1,
+                        &loaders,
+                        &game_version,
+                    )
                     .await
                     .unwrap();
-                if let Some(version_number) = config.mods.get(&project.slug) {
-                    // Update if version is incorrect
-                    if version_number != &version.version_number
-                        || !loaders.iter().any(|l| version.loaders.contains(l))
-                        || !version.game_versions.contains(&config.version)
-                    {
-                        api::modrinth::update_mod(&path, config.loader, &config.version)
-                            .await
-                            .unwrap();
-                    }
-                    done_mods.insert(project.slug);
-                } else {
-                    // Remove if not in mods.toml
-                    cprintln!(
-                        "<r>Removing</r> {} = {}...",
-                        project.slug,
-                        version.version_number
-                    );
-                    fs::remove_file(&path).unwrap();
+                    let version_file = latest_version.get_primary_file();
+                    download_version_file(&version_file, &path).await.unwrap();
+                    remove_file(&path).unwrap();
                 }
+                synced_mods.insert(project.slug);
+            }
+            // Remove if not in mods.toml
+            None => {
+                cprintln!(
+                    "<r>Removing</r> {} = {}...",
+                    project.slug,
+                    cur_version.version_number
+                );
+                fs::remove_file(&path).unwrap();
             }
         }
     }
 
     // Download other mods
-    for (mod_name, version_number) in config.mods.iter().filter(|(k, _)| !done_mods.contains(*k)) {
+    for (mod_name, version_number) in config
+        .mods
+        .iter()
+        .filter(|(k, _)| !synced_mods.contains(*k))
+    {
         if let Err(err) = api::modrinth::download_mod(
             mod_name,
             version_number,
@@ -157,4 +186,12 @@ pub async fn add<P: AsRef<Path>>(slugs: Vec<String>, current_dir: P) {
         }
     }
     cprintln!("done!")
+}
+
+fn get_jar_files(dir: &Path) -> Vec<DirEntry> {
+    fs::read_dir(dir)
+        .unwrap()
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.path().extension().unwrap() == "jar")
+        .collect::<Vec<DirEntry>>()
 }
