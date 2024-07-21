@@ -104,13 +104,15 @@ impl ModCommands {
                 for (mod_name, version_number) in
                     config.mods.iter().filter(|(k, _)| !done_mods.contains(*k))
                 {
-                    api::modrinth::download_mod(
+                    if let Err(err) = api::modrinth::download_mod(
                         mod_name,
                         version_number,
                         config.loader,
                         &config.version,
                         current_dir,
-                    );
+                    ) {
+                        cprintln!("<r!>Error</> failed to download {} = {}: {}", mod_name, version_number, err)
+                    }
                 }
             }
             ModCommands::Update => {
