@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.11](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.10..0.1.0-alpha.11) - 2024-07-21
+
+### <!-- 0 -->🎈 Features
+
+
+- Format preserving edit of toml - ([5f2d4fb](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/5f2d4fbbc9791b2e0b7c2e0edf44442e5695b607))
+- Async sync - ([4526038](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/45260388bb4718174a8f581cb8deebd2f26ca773))
+- Async add - ([ccf422b](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/ccf422bb1a740223d73637e0829c188d4f256b45))
+- Async mod update - ([14e6ee5](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/14e6ee54feb6deac09cff2d6945a9b9188808d3b))
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Drop runtime in runtime error - ([b3ae066](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/b3ae066358e7f781a9b0ee17cd7449dab98b7a08))
+
+### <!-- 2 --> Refactor
+
+
+- Use async stream to download - ([81f7ac3](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/81f7ac3ea615e70d7b7050cad856f78eee85fa7b))
+- Rename mod command to modrinth - ([07f02de](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/07f02de50b915754a4fa97b8b153763718a3695b))
+- Created ice-util, ice-server, ice-core - ([6843f51](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/6843f517184eb49205c7e14855938686aed6e144))
+- Module structure - ([a5a0573](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/a5a0573d794c349313471ef0452a98e329167eb5))
+- All asynchronized - ([e5f887f](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/e5f887f141c783656122314409a35c6f45aa3c13))
+- Mod sync - ([107dc13](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/107dc13c5bfab4ff4733b1285327cf905466a5f2))
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+
+
+- *(deps)* Clean up deps - ([aba6aab](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/aba6aab256afd3016dc6aedcf6bc2acb027e9483))
+
 ## [0.1.0-alpha.10](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.9..0.1.0-alpha.10) - 2024-07-21
 
 ### <!-- 1 -->🕷️ Bug Fixes
