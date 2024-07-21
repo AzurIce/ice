@@ -2,7 +2,7 @@ mod modrinth;
 mod server;
 
 use clap::{Parser, Subcommand};
-use ice::loader::Loader;
+use ice_core::Loader;
 use std::env;
 
 use server::ServerCommands;

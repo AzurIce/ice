@@ -5,9 +5,11 @@ use std::{
     thread,
 };
 
+use ice_core::Loader;
+use ice_util::regex::player_regex;
 use log::{error, info};
 
-use crate::{config::Config, loader::Loader, utils::regex::player_regex};
+use crate::config::Config;
 
 use super::Event;
 

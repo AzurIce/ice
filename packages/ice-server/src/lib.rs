@@ -6,16 +6,15 @@ use std::{
     thread,
 };
 
-use crate::{
-    config::Config,
-    utils::{fs::copy_dir, time::get_cur_time_str},
-};
+use crate::config::Config;
+use ice_util::{fs::copy_dir, time::get_cur_time_str};
 use log::{error, info, warn};
 
 use regex::Regex;
 use server::Server;
 
 pub mod command;
+pub mod config;
 pub mod server;
 
 pub enum Event {

@@ -4,7 +4,9 @@ use std::{
 };
 
 use clap::Subcommand;
-use ice::{api::mojang::get_latest_version, config::Config, core::Core, loader::Loader};
+use ice::api::mojang::get_latest_version;
+use ice_core::Loader;
+use ice_server::{config::Config, Core};
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 

@@ -3,8 +3,10 @@ pub mod path;
 pub mod regex;
 pub mod time;
 
+use std::path::Path;
+
 use futures_util::StreamExt;
-use std::{error::Error, path::Path};
+use std::error::Error;
 use tokio::io::AsyncWriteExt;
 
 pub fn download_from_url_blocking<S: AsRef<str>, P: AsRef<Path>>(
