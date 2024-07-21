@@ -5,12 +5,13 @@ use std::{
     sync::Arc,
 };
 
-use color_print::{cprint, cprintln};
+use color_print::{cprintln};
 use ice::{
     api::{
         self,
         modrinth::{
-            add_mod, get_project_versions, types::Version, utils::download_version_file, HashMethod,
+            get_latest_version_from_slug, get_project_versions, types::Version,
+            utils::download_version_file, HashMethod,
         },
     },
     config::ModConfig,
@@ -186,10 +187,8 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P) {
 pub async fn update<P: AsRef<Path>>(current_dir: P) {
     let current_dir = current_dir.as_ref();
 
-    info!("loading mods.toml...");
     let mut config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
 
-    info!("updating mods...");
     for file in fs::read_dir(current_dir).unwrap() {
         let file = file.unwrap();
         let path = file.path();
@@ -214,19 +213,56 @@ pub async fn add<P: AsRef<Path>>(slugs: Vec<String>, current_dir: P) {
     info!("loading mods.toml...");
     let mut config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
 
+    let loaders = if let Loader::Quilt = config.loader {
+        vec![Loader::Quilt, Loader::Fabric]
+    } else {
+        vec![config.loader]
+    };
+    let game_version = config.version.clone();
+    let mods = Arc::new(config.mods.clone());
+
+    enum AddRes {
+        Added(String, String),
+        AlreadyExist(String, String),
+    }
+
+    let mut join_set = JoinSet::<Result<AddRes, String>>::new();
     for slug in slugs {
-        cprint!("<g>Adding</> {slug}...");
-        if config.mods.contains_key(&slug) {
-            cprintln!("already exists, skipped.");
-            return;
-        }
-        cprintln!();
-        match add_mod(slug, config.loader, config.version.clone(), current_dir).await {
-            Ok((slug, version)) => {
-                config.insert_mod(slug, version);
-                config.save(current_dir.join("mods.toml")).unwrap();
+        let loaders = loaders.clone();
+        let game_version = game_version.clone();
+        let mods = mods.clone();
+
+        let current_dir = current_dir.to_owned();
+        join_set.spawn(async move {
+            if let Some(version) = mods.get(&slug) {
+                return Ok(AddRes::AlreadyExist(slug.clone(), version.clone()));
             }
-            Err(err) => cprintln!("<r>err</>: {err}"),
+            let version = get_latest_version_from_slug(&slug, loaders, game_version)
+                .await
+                .map_err(|err| format!("failed to get latest version from slug: {err}"))?;
+            let version_file = version.get_primary_file();
+            download_version_file(version_file, current_dir)
+                .await
+                .map_err(|err| format!("failed to download version file: {err}"))?;
+            Ok(AddRes::Added(slug, version.version_number))
+        });
+    }
+
+    while let Some(res) = join_set.join_next().await {
+        let res = res.unwrap();
+        match res {
+            Ok(res) => match res {
+                AddRes::Added(slug, version) => {
+                    config.insert_mod(slug.clone(), version.clone());
+                    cprintln!("<g>Added</> {} = {}", slug, version);
+                }
+                AddRes::AlreadyExist(slug, version) => {
+                    cprintln!("<y>Already Exist</> {} = {}", slug, version);
+                }
+            },
+            Err(err) => {
+                cprintln!("<r>Failed</> {err}")
+            }
         }
     }
     cprintln!("done!")
