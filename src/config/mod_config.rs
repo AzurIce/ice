@@ -1,6 +1,7 @@
 use std::{collections::HashMap, fs, path::Path};
 
 use serde::{Deserialize, Serialize};
+use toml_edit::{value, DocumentMut};
 
 use crate::loader::Loader;
 
@@ -10,6 +11,8 @@ pub struct ModConfig {
     pub loader: Loader,
     #[serde(default)]
     pub mods: HashMap<String, String>, // slug -> version_number
+    #[serde(skip)]
+    inner: Option<DocumentMut>
 }
 
 impl ModConfig {
@@ -18,22 +21,78 @@ impl ModConfig {
             version,
             loader,
             mods: HashMap::new(),
+            inner: None,
         }
+    }
+
+    pub fn from_str(s: &str) -> Result<Self, String> {
+        let document = s.parse::<DocumentMut>().unwrap();
+        let mut config = toml::from_str::<ModConfig>(s)
+            .map_err(|err| format!("failed to parse config: {}", err))?;
+        config.inner = Some(document);
+        Ok(config)
+    }
+
+    pub fn to_string(&self) -> String {
+        let config = toml::to_string_pretty(self).unwrap();
+        let config = self.inner.as_ref().map(|d| d.to_string()).unwrap_or(config);
+        return config;
     }
 
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, String> {
         let config = fs::read_to_string(path)
             .map_err(|err| format!("failed to read config file: {}", err))?;
-        let config = toml::from_str::<ModConfig>(&config)
-            .map_err(|err| format!("failed to parse config: {}", err))?;
+        let config = Self::from_str(&config)?;
         // TODO: check server version
         Ok(config)
     }
 
     pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), String> {
-        let config = toml::to_string_pretty(self)
-            .map_err(|err| format!("failed to serialize config: {}", err))?;
+        let config = self.to_string();
         fs::write(path, config).map_err(|err| format!("failed to write config file: {}", err))?;
         Ok(())
+    }
+}
+
+impl ModConfig {
+    pub fn insert_mod(&mut self, slug: String, version: String) {
+        self.mods.insert(slug.clone(), version.clone());
+        if let Some(document) = &mut self.inner {
+            if let Some(item) = document["mods"][&slug].as_value_mut() {
+                let decor = item.decor();
+                let prefix = decor.prefix().map(|s| s.as_str().unwrap()).unwrap_or("");
+                let suffix = decor.suffix().map(|s| s.as_str().unwrap()).unwrap_or("");
+                *item = value(version).into_value().unwrap().decorated(prefix, suffix);
+            } else {
+                document["mods"][&slug] = value(version);
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use toml_edit::{de::from_document, value, DocumentMut};
+
+    use crate::config::Config;
+
+    use super::ModConfig;
+
+    #[test]
+    fn test_toml_edit() {
+        let config = r#"version = "1.20.1"
+loader = "quilt"
+
+# mods
+[mods]
+a = "123" # asdsad
+# asds
+b = "123123123" # asdd
+#asdskadasjd"#;
+        let mut config = ModConfig::from_str(&config).unwrap();
+
+        config.insert_mod("asd".to_string(), "123123".to_string());
+
+        println!("{}", config.to_string());
     }
 }
