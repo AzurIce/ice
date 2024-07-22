@@ -22,6 +22,10 @@ pub enum Loader {
     LiteLoader,
     Rift,
     Bukkit,
+    Folia,
+    Paper,
+    Spigot,
+    Bungeecord,
 }
 
 impl Display for Loader {
@@ -34,6 +38,10 @@ impl Display for Loader {
             Self::LiteLoader => "liteloader",
             Self::Rift => "rift",
             Self::Bukkit => "bukkit",
+            Self::Folia => "folia",
+            Self::Paper => "paper",
+            Self::Spigot => "spigot",
+            Self::Bungeecord => "bungeecord",
         })
     }
 }
