@@ -161,8 +161,7 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P) {
                 .find(|v| v.version_number == version_number)
             {
                 let version_file = version.get_primary_file();
-                let path = current_dir.join(format!("{}.jar", slug));
-                download_version_file(&version_file, &path).await.unwrap();
+                download_version_file(&version_file, &current_dir).await.unwrap();
                 Ok((slug, version_number))
             } else {
                 Err(format!("failed to find version {} = {}", slug, version_number).into())
