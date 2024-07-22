@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.13](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.12..0.1.0-alpha.13) - 2024-07-22
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Add mod config save - ([0103e81](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/0103e81873bbe5ed67cec57b0196cc43e70f7d2a))
+
 ## [0.1.0-alpha.12](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.11..0.1.0-alpha.12) - 2024-07-22
 
 ### <!-- 1 -->🕷️ Bug Fixes
