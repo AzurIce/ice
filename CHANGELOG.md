@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.12](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.11..0.1.0-alpha.12) - 2024-07-22
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Added rift variant for loader - ([a4f9987](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/a4f9987949124b5febefdf58e451c2b0467cfdba))
+
 ## [0.1.0-alpha.11](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.10..0.1.0-alpha.11) - 2024-07-21
 
 ### <!-- 0 -->🎈 Features
