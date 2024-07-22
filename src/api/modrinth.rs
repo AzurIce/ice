@@ -174,6 +174,8 @@ pub async fn get_project_versions<S: AsRef<str>>(
             ),
         ))
     }
+    let url = reqwest::Url::parse_with_params(&url, params)
+        .map_err(|err| format!("failed to parse url: {err}"))?;
 
     let res = reqwest::get(url).await?;
     let versions = res.json::<Vec<Version>>().await?;
@@ -364,7 +366,7 @@ mod test {
     #[tokio::test]
     async fn test_get_project_versions() {
         let versions = get_project_versions(
-            "iris",
+            "terralith",
             Some(&vec![Loader::Quilt, Loader::Fabric]),
             Some("1.20.1".to_string()),
         )
