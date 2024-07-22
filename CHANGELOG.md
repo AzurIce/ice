@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.15](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.14..0.1.0-alpha.15) - 2024-07-22
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Added folia, paper, spigot and bungeecord variant for loader - ([83183f7](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/83183f7c0456d3cac7cf0925d1a1db00921900c1))
+
 ## [0.1.0-alpha.14](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.13..0.1.0-alpha.14) - 2024-07-22
 
 ### <!-- 1 -->🕷️ Bug Fixes
