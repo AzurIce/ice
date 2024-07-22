@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.16](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.15..0.1.0-alpha.16) - 2024-07-22
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Added sponge variant for loader - ([68009cb](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/68009cbd8c357bb1be9183ae7ac5ede5173fb6bb))
+
 ## [0.1.0-alpha.15](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.14..0.1.0-alpha.15) - 2024-07-22
 
 ### <!-- 1 -->🕷️ Bug Fixes
