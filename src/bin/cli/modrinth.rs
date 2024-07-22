@@ -161,7 +161,9 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P) {
                 .find(|v| v.version_number == version_number)
             {
                 let version_file = version.get_primary_file();
-                download_version_file(&version_file, &current_dir).await.unwrap();
+                download_version_file(&version_file, &current_dir)
+                    .await
+                    .unwrap();
                 Ok((slug, version_number))
             } else {
                 Err(format!("failed to find version {} = {}", slug, version_number).into())
@@ -222,7 +224,7 @@ pub async fn update<P: AsRef<Path>>(current_dir: P) {
                 ))
             } else {
                 let version_file = version.get_primary_file();
-                download_version_file(&version_file, &file.path())
+                download_version_file(&version_file, path.parent().unwrap())
                     .await
                     .unwrap();
                 remove_file(path).unwrap();
