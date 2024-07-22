@@ -27,6 +27,7 @@ pub enum Loader {
     Spigot,
     Sponge,
     Bungeecord,
+    Datapack,
 }
 
 impl Display for Loader {
@@ -44,6 +45,7 @@ impl Display for Loader {
             Self::Spigot => "spigot",
             Self::Sponge => "sponge",
             Self::Bungeecord => "bungeecord",
+            Self::Datapack => "datapack",
         })
     }
 }
