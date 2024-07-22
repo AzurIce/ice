@@ -321,7 +321,14 @@ fn get_jar_files(dir: &Path) -> Vec<DirEntry> {
     fs::read_dir(dir)
         .unwrap()
         .filter_map(|entry| entry.ok())
-        .filter(|entry| entry.path().extension().unwrap() == "jar")
+        .filter(|entry| {
+            entry
+                .path()
+                .extension()
+                .map(|s| s.to_str().unwrap())
+                .unwrap_or("")
+                == "jar"
+        })
         .collect::<Vec<DirEntry>>()
 }
 
