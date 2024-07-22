@@ -20,7 +20,8 @@ pub enum Loader {
     Forge,
     NeoForge,
     LiteLoader,
-    Rift
+    Rift,
+    Bukkit,
 }
 
 impl Display for Loader {
@@ -32,6 +33,7 @@ impl Display for Loader {
             Self::NeoForge => "neoforge",
             Self::LiteLoader => "liteloader",
             Self::Rift => "rift",
+            Self::Bukkit => "bukkit",
         })
     }
 }
