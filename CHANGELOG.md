@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.21](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.20..0.1.0-alpha.21) - 2024-07-22
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Mods.toml's mod version not properly updated after mod update - ([2ef659f](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/2ef659f6dd4a04e84545ceb8d36b2fe977a8ea17))
+
 ## [0.1.0-alpha.20](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.19..0.1.0-alpha.20) - 2024-07-22
 
 ### <!-- 1 -->🕷️ Bug Fixes
