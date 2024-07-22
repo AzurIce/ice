@@ -28,6 +28,7 @@ pub enum Loader {
     Sponge,
     Bungeecord,
     Datapack,
+    PurPur,
 }
 
 impl Display for Loader {
@@ -46,6 +47,7 @@ impl Display for Loader {
             Self::Sponge => "sponge",
             Self::Bungeecord => "bungeecord",
             Self::Datapack => "datapack",
+            Self::PurPur => "purpur",
         })
     }
 }
