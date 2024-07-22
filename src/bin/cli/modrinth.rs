@@ -228,7 +228,7 @@ pub async fn update<P: AsRef<Path>>(current_dir: P) {
                     .await
                     .unwrap();
                 remove_file(path).unwrap();
-                Ok(UpdateRes::Updated(project.slug, cur_version.version_number))
+                Ok(UpdateRes::Updated(project.slug, version.version_number))
             }
         });
     }
