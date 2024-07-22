@@ -19,6 +19,8 @@ scoop install ice/ice
 
 #### 更新
 
+> 如果提示错误可以 `scoop bucket rm ice` 后重新添加 bucket，再更新/安装。
+
 ```
 scoop update
 scoop update ice
@@ -38,9 +40,9 @@ cargo install --git https://github.com/AzurIce/ice.git --locked
 Usage: ice.exe <COMMAND>
 
 Commands:
-  mod     Mod related commands
-  server  Server related commands
-  help    Print this message or the help of the given subcommand(s)
+  modrinth  Modrinth related commands
+  server    Server related commands
+  help      Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help     Print help
@@ -50,7 +52,7 @@ Options:
 ### mod
 
 ```
-Usage: ice.exe mod <COMMAND>
+Usage: ice.exe modrinth <COMMAND>
 
 Commands:
   init    Initialize a mods.toml
@@ -63,7 +65,7 @@ Options:
   -h, --help  Print help
 ```
 
-`ice mod` 命令可以使用当前目录的 `mods.toml` 来管理当前目录的 mod，目前所有的 mod 均通过 Modrinth API 获取（未来可能会支持 CurseForge 等其他平台）。
+`ice modrinth` 命令可以使用当前目录的 `mods.toml` 来管理当前目录的 mod，目前所有的 mod 均通过 Modrinth API 获取。
 
 可用的命令如下：
 
@@ -99,12 +101,10 @@ Options:
 
         是一系列 `slug` - `version_number` 的键值对，`slug` 即 Modrinth 网站 mod 页面 url 内的 mod 名称。
 
-- `ice mod sync`：根据 `mods.toml` 中的定义下载缺失的 mod。
+- `ice modrinth sync`：根据 `mods.toml` 中的定义下载缺失的 mod、移除多余的 mod（只会移除存在于 Modrinth 上的 Mod）、更新版本不对的 mod。
 
-  目前只实现了下载没有的，没做删除多出来的。
-
-- `ice mod update`：下载当前目录所有 mod 符合 `version` 和 `loader` 的最新版本，删除老版本，并更新到 `mods.toml` 中。
-- `ice mod add <slug>`: 下载符合 `version` 和 `loader` 的最新版本 mod，并更新到 `mods.toml` 中
+- `ice modrinth update`：下载当前目录所有 mod 符合 `version` 和 `loader` 的最新版本，删除老版本，并更新到 `mods.toml` 中。
+- `ice modrinth add <slug>`: 下载符合 `version` 和 `loader` 的最新版本 mod，并更新到 `mods.toml` 中
 
 ### server
 
