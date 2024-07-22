@@ -25,6 +25,7 @@ pub enum Loader {
     Folia,
     Paper,
     Spigot,
+    Sponge,
     Bungeecord,
 }
 
@@ -41,6 +42,7 @@ impl Display for Loader {
             Self::Folia => "folia",
             Self::Paper => "paper",
             Self::Spigot => "spigot",
+            Self::Sponge => "sponge",
             Self::Bungeecord => "bungeecord",
         })
     }
