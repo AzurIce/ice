@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.18](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.17..0.1.0-alpha.18) - 2024-07-22
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Sync download path error - ([1ca95de](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/1ca95de40a66aed80249e76c84e42a8cb06ba8e7))
+
 ## [0.1.0-alpha.17](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.16..0.1.0-alpha.17) - 2024-07-22
 
 ### <!-- 1 -->🕷️ Bug Fixes
