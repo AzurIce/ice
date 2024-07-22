@@ -301,6 +301,7 @@ pub async fn add<P: AsRef<Path>>(slugs: Vec<String>, current_dir: P) {
             Ok(res) => match res {
                 AddRes::Added(slug, version) => {
                     config.insert_mod(slug.clone(), version.clone());
+                    config.save(current_dir.join("mods.toml")).unwrap();
                     cprintln!("<g>Added</> {} = {}", slug, version);
                 }
                 AddRes::AlreadyExist(slug, version) => {
