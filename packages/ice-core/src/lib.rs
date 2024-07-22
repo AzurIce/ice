@@ -71,6 +71,7 @@ impl Loader {
         }
 
         let ice_dir = current_dir.join(".ice");
+        fs::create_dir_all(&ice_dir).unwrap();
         let res = reqwest::blocking::get(
             "https://quiltmc.org/api/v1/download-latest-installer/java-universal",
         )?;
