@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.17](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.16..0.1.0-alpha.17) - 2024-07-22
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Added datapack variant for loaders - ([b955bce](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/b955bce06a1201d6e57e8f1fa104b2cd6f4c6ffa))
+
 ## [0.1.0-alpha.16](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.15..0.1.0-alpha.16) - 2024-07-22
 
 ### <!-- 1 -->🕷️ Bug Fixes
