@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.14](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.13..0.1.0-alpha.14) - 2024-07-22
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Added bukkit variant for loader - ([c54a0dc](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/c54a0dca0af9d30d502890f76f7139dd8de7c942))
+
 ## [0.1.0-alpha.13](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.12..0.1.0-alpha.13) - 2024-07-22
 
 ### <!-- 1 -->🕷️ Bug Fixes
