@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.20](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.19..0.1.0-alpha.20) - 2024-07-22
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Fixed params of loaders and game_versions of get_project versions api - ([5cab5f4](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/5cab5f4355cc9ceb55d220b6139b1a9511e52a42))
+
 ## [0.1.0-alpha.19](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.18..0.1.0-alpha.19) - 2024-07-22
 
 ### <!-- 1 -->🕷️ Bug Fixes
