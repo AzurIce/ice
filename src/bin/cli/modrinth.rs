@@ -161,9 +161,20 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P) {
                 .find(|v| v.version_number == version_number)
             {
                 let version_file = version.get_primary_file();
+
+                // Remove the file if already exist
+                //
+                // Because if the file is correct, it should be already in synced_mods,
+                // so this file must be incorrect, should be deleted
+                let target_path = current_dir.join(&version_file.filename);
+                if target_path.exists() {
+                    fs::remove_file(target_path).unwrap();
+                }
                 download_version_file(&version_file, &current_dir)
                     .await
-                    .unwrap();
+                    .map_err(|err| {
+                        format!("failed to download {}: {}", version_file.filename, err)
+                    })?;
                 Ok((slug, version_number))
             } else {
                 Err(format!("failed to find version {} = {}", slug, version_number).into())
