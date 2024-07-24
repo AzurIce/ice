@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.22](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.21..0.1.0-alpha.22) - 2024-07-24
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Added purpur variant for loader - ([836532d](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/836532d1b281de12ee475eef5a74d28d17737a8b))
+- Server install does not create .ice folder automatically - ([3dbf042](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/3dbf042d2e3b53c827e100e9f77abf7bbfc2867c))
+- Extension unwrap error - ([2ab2eb6](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/2ab2eb615818fce38d39c79922a73524cae7cf95))
+- Sync won't work if file already exists - ([260c909](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/260c9099ce43c61b00bae214caab9f378afcf876))
+
+### <!-- 3 -->📚 Documentation
+
+
+- Update README.md - ([409c5cb](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/409c5cba8c77c87df3724f1b3ac39b07285bdf9f))
+
 ## [0.1.0-alpha.21](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.20..0.1.0-alpha.21) - 2024-07-22
 
 ### <!-- 1 -->🕷️ Bug Fixes
