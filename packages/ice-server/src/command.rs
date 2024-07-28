@@ -1,14 +1,9 @@
-use std::sync::{Arc, Mutex};
+pub mod bksnap;
+pub mod bkarch;
 
 use super::Core;
 
-// pub enum Command {
-//     SimpleCommand(dyn Task),
-//     ConfirmCommand(dyn Task),
-// }
-
-pub trait Task {
-    fn perform(core: Arc<Mutex<Core>>)
-    where
-        Self: Sized;
+pub trait Command {
+    fn cmd(&self) -> String;
+    fn perform(&mut self, core: &mut Core, args: Vec<String>);
 }
