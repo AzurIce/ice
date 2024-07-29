@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.24](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.23..0.1.0-alpha.24) - 2024-07-29
+
+### <!-- 0 -->🎈 Features
+
+
+- Implemented load for server bksnap and bkarch - ([a878056](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/a87805631ce8f116bc9ffa26b0a3ad9bbe777a14))
+
 ## [0.1.0-alpha.23](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.22..0.1.0-alpha.23) - 2024-07-29
 
 ### <!-- 0 -->🎈 Features
