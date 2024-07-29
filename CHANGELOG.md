@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.23](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.22..0.1.0-alpha.23) - 2024-07-29
+
+### <!-- 0 -->🎈 Features
+
+
+- Server uses Ice.toml for mod update, added server mod command, allow adding mod when the file is already exists - ([5a21677](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/5a21677ad4bc62e2a0fc20510010e9a2b5a54272))
+
+### <!-- 2 --> Refactor
+
+
+- *(ice-server)* Added Command trait - ([84a9ffa](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/84a9ffa417388161345b34f045c9e5ec99c604e8))
+
 ## [0.1.0-alpha.22](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.21..0.1.0-alpha.22) - 2024-07-24
 
 ### <!-- 1 -->🕷️ Bug Fixes
