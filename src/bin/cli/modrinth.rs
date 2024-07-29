@@ -18,7 +18,6 @@ use ice::{
 };
 use ice_core::Loader;
 use ice_util::fs::get_sha1_hash;
-use log::info;
 use tokio::task::JoinSet;
 
 /// Initialize a `mods.toml` under `current_dir`
@@ -47,11 +46,8 @@ pub async fn init<P: AsRef<Path>, S: AsRef<str>>(
 }
 
 #[tokio::main]
-pub async fn sync<P: AsRef<Path>>(current_dir: P) {
+pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &ModConfig) {
     let current_dir = current_dir.as_ref();
-
-    info!("loading mods.toml...");
-    let config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
 
     let mut synced_mods = HashSet::<String>::new();
 
@@ -196,10 +192,9 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P) {
 }
 
 #[tokio::main]
-pub async fn update<P: AsRef<Path>>(current_dir: P) {
+pub async fn update<P1: AsRef<Path>, P2: AsRef<Path>>(current_dir: P1, config: &mut ModConfig, config_path: P2) {
     let current_dir = current_dir.as_ref();
-
-    let mut config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
+    let config_path = config_path.as_ref();
 
     let loaders = if let Loader::Quilt = config.loader {
         vec![Loader::Quilt, Loader::Fabric]
@@ -249,7 +244,7 @@ pub async fn update<P: AsRef<Path>>(current_dir: P) {
             Ok(res) => match res {
                 UpdateRes::Updated(slug, version) => {
                     config.insert_mod(slug.clone(), version.clone());
-                    config.save(current_dir.join("mods.toml")).unwrap();
+                    config.save(config_path).unwrap();
                     cprintln!("<g>Updated</> {} = {}", slug, version);
                 }
                 UpdateRes::Unchanged(slug, version) => {
@@ -266,11 +261,9 @@ pub async fn update<P: AsRef<Path>>(current_dir: P) {
 }
 
 #[tokio::main]
-pub async fn add<P: AsRef<Path>>(slugs: Vec<String>, current_dir: P) {
+pub async fn add<P1: AsRef<Path>, P2: AsRef<Path>>(slugs: Vec<String>, current_dir: P1, config: &mut ModConfig, config_path: P2) {
     let current_dir = current_dir.as_ref();
-
-    info!("loading mods.toml...");
-    let mut config = ModConfig::load(current_dir.join("mods.toml")).unwrap();
+    let config_path = config_path.as_ref();
 
     let loaders = if let Loader::Quilt = config.loader {
         vec![Loader::Quilt, Loader::Fabric]
@@ -313,10 +306,12 @@ pub async fn add<P: AsRef<Path>>(slugs: Vec<String>, current_dir: P) {
             Ok(res) => match res {
                 AddRes::Added(slug, version) => {
                     config.insert_mod(slug.clone(), version.clone());
-                    config.save(current_dir.join("mods.toml")).unwrap();
+                    config.save(config_path).unwrap();
                     cprintln!("<g>Added</> {} = {}", slug, version);
                 }
                 AddRes::AlreadyExist(slug, version) => {
+                    config.insert_mod(slug.clone(), version.clone());
+                    config.save(config_path).unwrap();
                     cprintln!("<y>Already Exist</> {} = {}", slug, version);
                 }
             },

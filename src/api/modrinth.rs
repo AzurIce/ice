@@ -283,7 +283,8 @@ pub mod utils {
         let dir = dir.as_ref();
         let path = dir.join(&version_file.filename);
         if path.exists() {
-            return Err("already exists".into());
+            return Ok(())
+            // return Err("already exists".into());
         }
         download_from_url(&version_file.url, path, |_| {}).await
     }

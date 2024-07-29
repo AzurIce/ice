@@ -68,3 +68,18 @@ impl ModConfig {
         }
     }
 }
+
+
+#[cfg(test)]
+mod test {
+    use std::path::Path;
+
+    use super::ModConfig;
+
+    #[test]
+    fn foo() {
+        let mut config = ModConfig::load(Path::new(r#"G:\_MCServer\1.20.1 Survival\Ice.toml"#)).unwrap();
+        config.insert_mod("ashdajsdhasdk".to_string(), "asdhfjkladhsfjkl".to_string());
+        println!("{:?}", config.to_string())
+    }
+}
