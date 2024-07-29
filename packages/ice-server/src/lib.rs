@@ -4,7 +4,7 @@ use std::{
     io::stdin,
     path::{Path, PathBuf},
     sync::{mpsc, Arc, Mutex},
-    thread,
+    thread, time::Duration,
 };
 
 use crate::config::Config;
@@ -34,7 +34,6 @@ pub struct Core {
     pub event_tx: mpsc::Sender<Event>,
 
     pub running_server: Arc<Mutex<Option<Server>>>,
-    pub pending_confirm: bool,
 }
 
 impl Core {
@@ -57,6 +56,7 @@ impl Core {
         });
         let (command_tx, command_rx) = mpsc::channel::<String>();
 
+        // Thread to forward inputs to server stdin or command thread
         let _running_server = running_server.clone();
         let _command_tx = command_tx.clone();
         thread::spawn(move || {
@@ -76,6 +76,7 @@ impl Core {
             }
         });
 
+        // Thread to handle server events
         let (event_tx, event_rx) = mpsc::channel::<Event>();
         let _running_server = running_server.clone();
         let _command_tx = command_tx.clone();
@@ -106,7 +107,6 @@ impl Core {
             command_tx,
             event_tx,
             running_server,
-            pending_confirm: false,
         };
 
         while let Ok(command) = command_rx.recv() {
@@ -135,8 +135,6 @@ impl Core {
     }
 
     fn handle_command(&mut self, command: String) {
-        let server = self.running_server.clone();
-
         let command = command.replace("\r\n", "\n");
         let command = command.strip_prefix('#').unwrap();
         let command = command.strip_suffix('\n').unwrap_or(command);
@@ -148,16 +146,7 @@ impl Core {
         info!("command: {} {:?}", command, args);
 
         match command {
-            "start" => {
-                info!("command start");
-                let mut server = server.lock().unwrap();
-                if server.is_some() {
-                    error!("server is already running");
-                } else {
-                    self.update_properties();
-                    *server = Some(Server::run(self.config.clone(), self.event_tx.clone()));
-                }
-            }
+            "start" => self.start_server(),
             _ => {
                 let cmd = self.commands.get(command).cloned();
                 if let Some(cmd) = cmd {
@@ -167,6 +156,33 @@ impl Core {
                     println!("unknown command")
                 }
             }
+        }
+    }
+
+    pub fn start_server(&mut self) {
+        let mut server = self.running_server.lock().unwrap();
+        if server.is_some() {
+            error!("server is already running");
+        } else {
+            self.update_properties();
+            *server = Some(Server::run(self.config.clone(), self.event_tx.clone()));
+        }
+    }
+
+    pub fn stop_server(&mut self) {
+        if let Some(server) = self.running_server.lock().unwrap().as_mut() {
+            server.writeln("stop");
+        } else {
+            info!("no running server");
+        }
+    }
+
+    pub fn wait_till_stop(&self) {
+        loop {
+            if self.running_server.lock().unwrap().is_none() {
+                break;
+            }
+            thread::sleep(Duration::from_secs_f32(0.2));
         }
     }
 

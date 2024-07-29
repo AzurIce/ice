@@ -6,7 +6,7 @@ use std::{
 use ice_util::{fs::copy_dir, time::get_cur_time_str};
 use log::{error, info, warn};
 
-use super::Command;
+use super::{load_save, Command};
 
 #[derive(Default)]
 pub struct BkArch;
@@ -29,9 +29,14 @@ impl Command for BkArch {
             core.say("saving archive...");
             make_archive(&comment);
             core.say("saved archive")
-        } else if args.len() == 2 && args[0] == "load" {
-            println!("bkarch load, not implemented yet")
-            // TODO: load arch backup
+        } else if args[0] == "load" {
+            let idx = args.get(1).and_then(|s| s.parse::<usize>().ok());
+            let snapshot_list = get_archive_list();
+            if let Some(target_snapshot) = idx.and_then(|idx| snapshot_list.get(idx)) {
+                load_save(core, target_snapshot)
+            } else {
+                core.say("please provide a valid snapshot index, use `bksnap list` to show snapshot list");
+            }
         }
     }
 }
