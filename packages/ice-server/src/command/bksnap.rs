@@ -1,4 +1,7 @@
-use std::{fs::{self, DirEntry}, path::{Path, PathBuf}};
+use std::{
+    fs::{self, DirEntry},
+    path::{Path, PathBuf},
+};
 
 use ice_util::{fs::copy_dir, time::get_cur_time_str};
 use log::{error, info, warn};
@@ -8,7 +11,7 @@ use crate::Core;
 use super::Command;
 
 pub struct BkSnap {
-    max_slots: usize
+    max_slots: usize,
 }
 
 impl Default for BkSnap {

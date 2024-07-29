@@ -56,7 +56,7 @@ impl ModCommands {
 
         match self {
             ModCommands::Sync => {
-                modrinth::sync(current_dir, &mut config);
+                modrinth::sync(current_dir, &config);
             }
             ModCommands::Update => {
                 modrinth::update(current_dir, &mut config, config_path);

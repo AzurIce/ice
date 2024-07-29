@@ -8,7 +8,7 @@ use std::{
 };
 
 use crate::config::Config;
-use command::{bksnap::BkSnap, Command};
+use command::{bkarch::BkArch, bksnap::BkSnap, Command};
 use log::{error, info, warn};
 
 use regex::Regex;
@@ -27,7 +27,7 @@ pub enum Event {
 pub struct Core {
     pub config: Config,
     pub server_dir: PathBuf,
-    commands: HashMap<String, Arc<Mutex<Box<dyn Command>>>>,
+    commands: HashMap<String, Arc<Mutex<Box<dyn Command + Send + Sync>>>>,
 
     pub output_tx: mpsc::Sender<String>, // Sender for stdout_loop
     pub command_tx: mpsc::Sender<String>, // Sender for command_hanle_loop
@@ -41,9 +41,11 @@ impl Core {
     pub fn run<P: AsRef<Path>>(config: Config, server_dir: P) {
         let server_dir = server_dir.as_ref().to_owned();
 
-        let mut commands = HashMap::<String, Arc<Mutex<Box<dyn Command>>>>::new();
-        for cmd in [BkSnap::default()] {
-            commands.insert(cmd.cmd(), Arc::new(Mutex::new(Box::new(cmd))));
+        let mut commands = HashMap::<String, Arc<Mutex<Box<dyn Command + Send + Sync>>>>::new();
+        let cmds: Vec<Box<dyn Command + Send + Sync>> =
+            vec![Box::<BkSnap>::default(), Box::<BkArch>::default()];
+        for cmd in cmds {
+            commands.insert(cmd.cmd(), Arc::new(Mutex::new(cmd)));
         }
 
         let running_server = Arc::new(Mutex::new(None::<Server>));
@@ -160,7 +162,7 @@ impl Core {
                 let cmd = self.commands.get(command).cloned();
                 if let Some(cmd) = cmd {
                     let mut cmd = cmd.lock().unwrap();
-                    cmd.perform(self, args.into_iter().map(|s| s.to_string()).collect())
+                    cmd.perform(self, args.iter().map(|s| s.to_string()).collect())
                 } else {
                     println!("unknown command")
                 }

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, path::Path};
+use std::{collections::HashMap, fmt::Display, fs, path::Path, str::FromStr};
 
 use ice_core::Loader;
 use serde::{Deserialize, Serialize};
@@ -11,7 +11,26 @@ pub struct ModConfig {
     #[serde(default)]
     pub mods: HashMap<String, String>, // slug -> version_number
     #[serde(skip)]
-    inner: Option<DocumentMut>
+    inner: Option<DocumentMut>,
+}
+
+impl Display for ModConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let config = toml::to_string_pretty(self).unwrap();
+        let config = self.inner.as_ref().map(|d| d.to_string()).unwrap_or(config);
+        f.write_str(&config)
+    }
+}
+
+impl FromStr for ModConfig {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let document = s.parse::<DocumentMut>().unwrap();
+        let mut config = toml::from_str::<ModConfig>(s)
+            .map_err(|err| format!("failed to parse config: {}", err))?;
+        config.inner = Some(document);
+        Ok(config)
+    }
 }
 
 impl ModConfig {
@@ -22,20 +41,6 @@ impl ModConfig {
             mods: HashMap::new(),
             inner: None,
         }
-    }
-
-    pub fn from_str(s: &str) -> Result<Self, String> {
-        let document = s.parse::<DocumentMut>().unwrap();
-        let mut config = toml::from_str::<ModConfig>(s)
-            .map_err(|err| format!("failed to parse config: {}", err))?;
-        config.inner = Some(document);
-        Ok(config)
-    }
-
-    pub fn to_string(&self) -> String {
-        let config = toml::to_string_pretty(self).unwrap();
-        let config = self.inner.as_ref().map(|d| d.to_string()).unwrap_or(config);
-        return config;
     }
 
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, String> {
@@ -61,14 +66,16 @@ impl ModConfig {
                 let decor = item.decor();
                 let prefix = decor.prefix().map(|s| s.as_str().unwrap()).unwrap_or("");
                 let suffix = decor.suffix().map(|s| s.as_str().unwrap()).unwrap_or("");
-                *item = value(version).into_value().unwrap().decorated(prefix, suffix);
+                *item = value(version)
+                    .into_value()
+                    .unwrap()
+                    .decorated(prefix, suffix);
             } else {
                 document["mods"][&slug] = value(version);
             }
         }
     }
 }
-
 
 #[cfg(test)]
 mod test {
@@ -78,7 +85,8 @@ mod test {
 
     #[test]
     fn foo() {
-        let mut config = ModConfig::load(Path::new(r#"G:\_MCServer\1.20.1 Survival\Ice.toml"#)).unwrap();
+        let mut config =
+            ModConfig::load(Path::new(r#"G:\_MCServer\1.20.1 Survival\Ice.toml"#)).unwrap();
         config.insert_mod("ashdajsdhasdk".to_string(), "asdhfjkladhsfjkl".to_string());
         println!("{:?}", config.to_string())
     }

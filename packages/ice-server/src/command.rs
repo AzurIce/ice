@@ -1,5 +1,5 @@
-pub mod bksnap;
 pub mod bkarch;
+pub mod bksnap;
 
 use super::Core;
 

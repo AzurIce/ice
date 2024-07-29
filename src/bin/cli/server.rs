@@ -21,7 +21,7 @@ pub async fn new<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
     let current_dir = current_dir.as_ref();
 
     let version = version.unwrap_or(get_latest_version().await.unwrap());
-    let dir = current_dir.join(&name);
+    let dir = current_dir.join(name);
     create_dir(&dir).unwrap();
     init_dir(dir, version, loader);
 }

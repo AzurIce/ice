@@ -96,7 +96,7 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &ModConfig) {
                         .await
                         .unwrap();
                         let version_file = latest_version.get_primary_file();
-                        download_version_file(&version_file, &current_dir)
+                        download_version_file(version_file, &current_dir)
                             .await
                             .unwrap();
                         remove_file(&path).unwrap();
@@ -166,14 +166,17 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &ModConfig) {
                 if target_path.exists() {
                     fs::remove_file(target_path).unwrap();
                 }
-                download_version_file(&version_file, &current_dir)
+                download_version_file(version_file, &current_dir)
                     .await
                     .map_err(|err| {
                         format!("failed to download {}: {}", version_file.filename, err)
                     })?;
                 Ok((slug, version_number))
             } else {
-                Err(format!("failed to find version {} = {}", slug, version_number).into())
+                Err(format!(
+                    "failed to find version {} = {}",
+                    slug, version_number
+                ))
             }
         });
     }
@@ -192,7 +195,11 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &ModConfig) {
 }
 
 #[tokio::main]
-pub async fn update<P1: AsRef<Path>, P2: AsRef<Path>>(current_dir: P1, config: &mut ModConfig, config_path: P2) {
+pub async fn update<P1: AsRef<Path>, P2: AsRef<Path>>(
+    current_dir: P1,
+    config: &mut ModConfig,
+    config_path: P2,
+) {
     let current_dir = current_dir.as_ref();
     let config_path = config_path.as_ref();
 
@@ -230,7 +237,7 @@ pub async fn update<P1: AsRef<Path>, P2: AsRef<Path>>(current_dir: P1, config: &
                 ))
             } else {
                 let version_file = version.get_primary_file();
-                download_version_file(&version_file, path.parent().unwrap())
+                download_version_file(version_file, path.parent().unwrap())
                     .await
                     .unwrap();
                 remove_file(path).unwrap();
@@ -261,7 +268,12 @@ pub async fn update<P1: AsRef<Path>, P2: AsRef<Path>>(current_dir: P1, config: &
 }
 
 #[tokio::main]
-pub async fn add<P1: AsRef<Path>, P2: AsRef<Path>>(slugs: Vec<String>, current_dir: P1, config: &mut ModConfig, config_path: P2) {
+pub async fn add<P1: AsRef<Path>, P2: AsRef<Path>>(
+    slugs: Vec<String>,
+    current_dir: P1,
+    config: &mut ModConfig,
+    config_path: P2,
+) {
     let current_dir = current_dir.as_ref();
     let config_path = config_path.as_ref();
 
