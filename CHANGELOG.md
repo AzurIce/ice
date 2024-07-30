@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.25](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.24..0.1.0-alpha.25) - 2024-07-30
+
+### <!-- 0 -->🎈 Features
+
+
+- Simple Plugin system, scoreboard cycle plugin - ([0783059](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/0783059e6a6f6cda0c089baf4d7a0c9f42220570))
+
 ## [0.1.0-alpha.24](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.23..0.1.0-alpha.24) - 2024-07-29
 
 ### <!-- 0 -->🎈 Features
