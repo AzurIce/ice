@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use regex::Regex;
 use tracing::info;
 
-use crate::{server::Server};
+use crate::server::Server;
 
 use super::Plugin;
 
@@ -30,7 +30,7 @@ impl Plugin for ScoreBoard {
             let re = Regex::new(r"\[([^\]]+)\]").unwrap();
 
             let objectives = re
-                .captures_iter(&capture.get(1).unwrap().as_str())
+                .captures_iter(capture.get(1).unwrap().as_str())
                 .map(|cap| cap.get(1).unwrap().as_str().to_string())
                 .collect::<Vec<String>>();
             self.event_tx

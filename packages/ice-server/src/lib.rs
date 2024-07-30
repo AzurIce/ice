@@ -104,11 +104,7 @@ impl Core {
                         println!("{msg}");
 
                         for plugin in _plugins.as_ref() {
-                            plugin
-                                .lock()
-                                .unwrap()
-                                .as_mut()
-                                .on_server_log(msg.clone());
+                            plugin.lock().unwrap().as_mut().on_server_log(msg.clone());
                         }
                     }
                     Event::PlayerMessage { player: _, msg } => {

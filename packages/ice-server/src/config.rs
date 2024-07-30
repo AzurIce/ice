@@ -1,7 +1,7 @@
 use ice_core::Loader;
 use serde::{Deserialize, Serialize};
-use toml::Value;
 use std::{collections::HashMap, fs, path::Path};
+use toml::Value;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {

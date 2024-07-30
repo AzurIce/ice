@@ -35,4 +35,3 @@ pub fn player_regex() -> &'static Regex {
     static PLAYER_REGEX: OnceLock<Regex> = OnceLock::new();
     PLAYER_REGEX.get_or_init(|| Regex::new(PLAYER).expect("regex err"))
 }
-
