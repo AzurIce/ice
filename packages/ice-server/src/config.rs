@@ -1,5 +1,6 @@
 use ice_core::Loader;
 use serde::{Deserialize, Serialize};
+use toml::Value;
 use std::{collections::HashMap, fs, path::Path};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -14,6 +15,8 @@ pub struct Config {
     pub properties: HashMap<String, String>,
     #[serde(default)]
     pub mods: HashMap<String, String>, // slug -> version_number
+    #[serde(default)]
+    pub plugins: HashMap<String, Value>,
 }
 
 // #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -31,6 +34,7 @@ impl Config {
             jvm_options: String::new(),
             properties: HashMap::new(),
             mods: HashMap::new(),
+            plugins: HashMap::new(),
         }
     }
 

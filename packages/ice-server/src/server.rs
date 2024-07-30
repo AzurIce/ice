@@ -6,11 +6,12 @@ use std::{
 };
 
 use ice_core::Loader;
-use ice_util::regex::player_regex;
 use log::{error, info};
+use regex::{done_regex, player_regex};
 
 use crate::config::Config;
 
+pub mod regex;
 use super::Event;
 
 pub struct Server {
@@ -18,7 +19,7 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn run(config: Config, event_tx: mpsc::Sender<Event>) -> Self {
+    pub fn run(config: Config, event_tx: tokio::sync::mpsc::UnboundedSender<Event>) -> Self {
         info!("Server::start");
         let jar_filename = match config.loader {
             Loader::Quilt => "quilt-server-launch.jar",
@@ -67,6 +68,8 @@ impl Server {
                             //         .send(content.to_string())
                             //         .expect("failed to send to command_tx");
                             // }
+                        } else if done_regex().is_match(&buf) {
+                            event_tx.send(Event::ServerDone).unwrap();
                         }
                         event_tx
                             .send(Event::ServerLog(buf.clone()))

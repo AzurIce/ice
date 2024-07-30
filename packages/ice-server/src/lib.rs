@@ -4,22 +4,26 @@ use std::{
     io::stdin,
     path::{Path, PathBuf},
     sync::{mpsc, Arc, Mutex},
-    thread, time::Duration,
+    thread,
+    time::Duration,
 };
 
 use crate::config::Config;
 use command::{bkarch::BkArch, bksnap::BkSnap, Command};
 use log::{error, info, warn};
 
+use plugin::{scoreboard::ScoreBoard, Plugin};
 use regex::Regex;
 use server::Server;
 
 pub mod command;
 pub mod config;
+pub mod plugin;
 pub mod server;
 
 pub enum Event {
     ServerDown,
+    ServerDone,
     ServerLog(String),
     PlayerMessage { player: String, msg: String },
 }
@@ -28,18 +32,29 @@ pub struct Core {
     pub config: Config,
     pub server_dir: PathBuf,
     commands: HashMap<String, Arc<Mutex<Box<dyn Command + Send + Sync>>>>,
+    plugins: Arc<Vec<Arc<Mutex<Box<dyn Plugin + Send>>>>>,
 
-    pub output_tx: mpsc::Sender<String>, // Sender for stdout_loop
-    pub command_tx: mpsc::Sender<String>, // Sender for command_hanle_loop
-    pub event_tx: mpsc::Sender<Event>,
+    pub output_tx: tokio::sync::mpsc::UnboundedSender<String>, // Sender for stdout_loop
+    pub command_tx: mpsc::Sender<String>,                      // Sender for command_hanle_loop
+    pub event_tx: tokio::sync::mpsc::UnboundedSender<Event>,
 
     pub running_server: Arc<Mutex<Option<Server>>>,
 }
 
 impl Core {
-    pub fn run<P: AsRef<Path>>(config: Config, server_dir: P) {
+    pub async fn run<P: AsRef<Path>>(config: Config, server_dir: P) {
         let server_dir = server_dir.as_ref().to_owned();
 
+        // Output
+        let running_server = Arc::new(Mutex::new(None::<Server>));
+        let (output_tx, mut output_rx) = tokio::sync::mpsc::unbounded_channel::<String>();
+        tokio::spawn(async move {
+            while let Some(buf) = output_rx.recv().await {
+                println!("{buf}")
+            }
+        });
+
+        // ? commands and plugins
         let mut commands = HashMap::<String, Arc<Mutex<Box<dyn Command + Send + Sync>>>>::new();
         let cmds: Vec<Box<dyn Command + Send + Sync>> =
             vec![Box::<BkSnap>::default(), Box::<BkArch>::default()];
@@ -47,13 +62,11 @@ impl Core {
             commands.insert(cmd.cmd(), Arc::new(Mutex::new(cmd)));
         }
 
-        let running_server = Arc::new(Mutex::new(None::<Server>));
-        let (output_tx, output_rx) = mpsc::channel::<String>();
-        thread::spawn(move || {
-            while let Ok(buf) = output_rx.recv() {
-                println!("{buf}")
-            }
-        });
+        let plugins: Vec<Arc<Mutex<Box<dyn Plugin + Send>>>> = vec![Arc::new(Mutex::new(
+            Box::new(ScoreBoard::init(running_server.clone()).await),
+        ))];
+        let plugins = Arc::new(plugins);
+
         let (command_tx, command_rx) = mpsc::channel::<String>();
 
         // Thread to forward inputs to server stdin or command thread
@@ -77,17 +90,26 @@ impl Core {
         });
 
         // Thread to handle server events
-        let (event_tx, event_rx) = mpsc::channel::<Event>();
+        let (event_tx, mut event_rx) = tokio::sync::mpsc::unbounded_channel::<Event>();
         let _running_server = running_server.clone();
         let _command_tx = command_tx.clone();
-        thread::spawn(move || {
-            while let Ok(event) = event_rx.recv() {
+        let _plugins = plugins.clone();
+        tokio::spawn(async move {
+            while let Some(event) = event_rx.recv().await {
                 match event {
                     Event::ServerDown => {
                         *_running_server.lock().unwrap() = None;
                     }
                     Event::ServerLog(msg) => {
-                        println!("{msg}")
+                        println!("{msg}");
+
+                        for plugin in _plugins.as_ref() {
+                            plugin
+                                .lock()
+                                .unwrap()
+                                .as_mut()
+                                .on_server_log(msg.clone());
+                        }
                     }
                     Event::PlayerMessage { player: _, msg } => {
                         if msg.starts_with("#") {
@@ -96,13 +118,25 @@ impl Core {
                                 .expect("failed to send to command_tx");
                         }
                     }
+                    Event::ServerDone => {
+                        let mut server = _running_server.lock().unwrap();
+                        for plugin in _plugins.as_ref() {
+                            plugin
+                                .lock()
+                                .unwrap()
+                                .as_mut()
+                                .on_server_done(server.as_mut());
+                        }
+                    }
                 }
             }
         });
+
         let mut core = Core {
             config,
             server_dir,
             commands,
+            plugins,
             output_tx,
             command_tx,
             event_tx,

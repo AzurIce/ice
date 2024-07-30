@@ -50,7 +50,9 @@ pub fn install<P: AsRef<Path>>(current_dir: P) {
             .expect("failed to install");
     }
 }
-pub fn run<P: AsRef<Path>>(current_dir: P) {
+
+#[tokio::main]
+pub async fn run<P: AsRef<Path>>(current_dir: P) {
     let current_dir = current_dir.as_ref();
     // a builder for `FmtSubscriber`.
     let subscriber = FmtSubscriber::builder()
@@ -72,7 +74,7 @@ pub fn run<P: AsRef<Path>>(current_dir: P) {
     // TODO: check mods
 
     info!("the core is running...");
-    Core::run(config, current_dir.join("server"))
+    Core::run(config, current_dir.join("server")).await;
 }
 
 pub fn init_dir<P: AsRef<Path>, S: AsRef<str>>(dir: P, version: S, loader: Loader) {
