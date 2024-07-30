@@ -7,6 +7,7 @@ use std::{
 
 use crate::server::Server;
 
+#[allow(unused)]
 pub trait Plugin {
     fn id(&self) -> String;
     fn on_server_log(&mut self, content: String) {}

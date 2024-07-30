@@ -32,8 +32,7 @@ pub struct Core {
     pub config: Config,
     pub server_dir: PathBuf,
     commands: HashMap<String, Arc<Mutex<Box<dyn Command + Send + Sync>>>>,
-    plugins: Arc<Vec<Arc<Mutex<Box<dyn Plugin + Send>>>>>,
-
+    // plugins: Arc<Vec<Arc<Mutex<Box<dyn Plugin + Send>>>>>,
     pub output_tx: tokio::sync::mpsc::UnboundedSender<String>, // Sender for stdout_loop
     pub command_tx: mpsc::Sender<String>,                      // Sender for command_hanle_loop
     pub event_tx: tokio::sync::mpsc::UnboundedSender<Event>,
@@ -62,10 +61,9 @@ impl Core {
             commands.insert(cmd.cmd(), Arc::new(Mutex::new(cmd)));
         }
 
-        let plugins: Vec<Arc<Mutex<Box<dyn Plugin + Send>>>> = vec![Arc::new(Mutex::new(
-            Box::new(ScoreBoard::init(running_server.clone()).await),
-        ))];
-        let plugins = Arc::new(plugins);
+        let mut plugins: Vec<Box<dyn Plugin + Send>> =
+            vec![Box::new(ScoreBoard::init(running_server.clone()).await)];
+        // let plugins = Arc::new(plugins);
 
         let (command_tx, command_rx) = mpsc::channel::<String>();
 
@@ -93,7 +91,7 @@ impl Core {
         let (event_tx, mut event_rx) = tokio::sync::mpsc::unbounded_channel::<Event>();
         let _running_server = running_server.clone();
         let _command_tx = command_tx.clone();
-        let _plugins = plugins.clone();
+        // let _plugins = plugins.clone();
         tokio::spawn(async move {
             while let Some(event) = event_rx.recv().await {
                 match event {
@@ -103,8 +101,8 @@ impl Core {
                     Event::ServerLog(msg) => {
                         println!("{msg}");
 
-                        for plugin in _plugins.as_ref() {
-                            plugin.lock().unwrap().as_mut().on_server_log(msg.clone());
+                        for plugin in &mut plugins {
+                            plugin.on_server_log(msg.clone());
                         }
                     }
                     Event::PlayerMessage { player: _, msg } => {
@@ -116,12 +114,8 @@ impl Core {
                     }
                     Event::ServerDone => {
                         let mut server = _running_server.lock().unwrap();
-                        for plugin in _plugins.as_ref() {
-                            plugin
-                                .lock()
-                                .unwrap()
-                                .as_mut()
-                                .on_server_done(server.as_mut());
+                        for plugin in &mut plugins {
+                            plugin.on_server_done(server.as_mut());
                         }
                     }
                 }
@@ -132,7 +126,7 @@ impl Core {
             config,
             server_dir,
             commands,
-            plugins,
+            // plugins,
             output_tx,
             command_tx,
             event_tx,

@@ -14,7 +14,6 @@ pub enum Events {
 
 pub struct ScoreBoard {
     objectives_regex: Regex,
-    objectives: Arc<Mutex<Vec<String>>>,
     event_tx: tokio::sync::mpsc::UnboundedSender<Events>,
 }
 
@@ -100,7 +99,6 @@ impl Plugin for ScoreBoard {
         let objectives_regex = Regex::new(r"]: There are \d+ objective\(s\): (.*)").unwrap();
         Self {
             objectives_regex,
-            objectives: Arc::new(Mutex::new(vec![])),
             event_tx,
         }
     }

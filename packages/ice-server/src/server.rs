@@ -1,7 +1,6 @@
 use std::{
     io::{self, BufRead, Write},
     process::{ChildStdin, Command, Stdio},
-    sync::mpsc,
     thread,
 };
 
