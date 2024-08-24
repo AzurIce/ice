@@ -1,23 +1,20 @@
 use std::{
-    io::{self, BufRead, Write},
-    process::{ChildStdin, Command, Stdio},
-    thread,
+    io::{self, BufRead, Write}, process::{ChildStdin, Command, Stdio}, thread
 };
 
 use ice_core::Loader;
 use log::{error, info};
-use regex::{done_regex, player_regex};
+use super::regex::{done_regex, player_regex};
 
 use crate::config::Config;
 
-pub mod regex;
-use super::Event;
+use crate::Event;
 
-pub struct Server {
+pub struct MinecraftServer {
     pub child_in: ChildStdin,
 }
 
-impl Server {
+impl MinecraftServer {
     pub fn run(config: Config, event_tx: tokio::sync::mpsc::UnboundedSender<Event>) -> Self {
         info!("Server::start");
         let jar_filename = match config.loader {

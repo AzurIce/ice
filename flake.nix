@@ -33,9 +33,11 @@
             # libusb1
             # openssl
             # pkg-config
+            extism-cli
             curl
             (rust-bin.nightly.latest.default.override {
               extensions = [ "rust-src" ];
+              targets = [ "wasm32-unknown-unknown" ];
             })
           ]
           ++

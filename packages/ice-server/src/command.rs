@@ -26,7 +26,7 @@ pub fn load_save<P: AsRef<Path>>(core: &mut Core, path: P) {
     core.say("shutting down server to load snapshot...");
     core.stop_server();
 
-    while core.running_server.lock().unwrap().is_some() {
+    while core.server.running() {
         thread::sleep(Duration::from_secs_f32(0.2));
     }
     info!("server stopped");

@@ -74,7 +74,7 @@ pub async fn run<P: AsRef<Path>>(current_dir: P) {
     // TODO: check mods
 
     info!("the core is running...");
-    Core::run(config, current_dir.join("server")).await;
+    Core::run(config, current_dir).await;
 }
 
 pub fn init_dir<P: AsRef<Path>, S: AsRef<str>>(dir: P, version: S, loader: Loader) {
