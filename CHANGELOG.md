@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.26](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.25..0.1.0-alpha.26) - 2024-08-25
+
+### <!-- 0 -->🎈 Features
+
+
+- Basic plugin system and built in plugin here - ([4b4877b](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/4b4877ba2ee5c17b64c9a7684e39efaa14edf4b4))
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+
+
+- Added git-cliff to flake - ([af459c8](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/af459c84473cf351e50f47c121161ff07236c8d5))
+
+### WIP
+
+
+- *(plugin)* Delay call api - ([49c5814](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/49c58141adf087e8a1b9c171bb77147065e655f0))
+- Basic plugin system based on rhai - ([65f14a7](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/65f14a727e67922f747a3f7b1f7e7d890232ba77))
+
 ## [0.1.0-alpha.25](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.24..0.1.0-alpha.25) - 2024-07-30
 
 ### <!-- 0 -->🎈 Features
