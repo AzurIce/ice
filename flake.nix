@@ -1,5 +1,5 @@
 {
-  description = "ach";
+  description = "ice";
 
   nixConfig = {
     extra-substituters = [
