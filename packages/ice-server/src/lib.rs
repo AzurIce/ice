@@ -5,6 +5,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{mpsc, Arc, Mutex},
     thread,
+    time::{Duration, Instant},
 };
 
 use crate::config::Config;
@@ -12,7 +13,7 @@ use command::{bkarch::BkArch, bksnap::BkSnap, Command};
 
 use plugin::{scoreboard::ScoreBoard, Plugin, RhaiPlugin};
 use server::Server;
-use tracing::{error, info, warn};
+use tracing::info;
 
 pub mod command;
 pub mod config;
@@ -31,7 +32,15 @@ pub enum Event {
     ServerDown,
     ServerDone,
     ServerLog(String),
-    PlayerMessage { player: String, msg: String },
+    PlayerMessage {
+        player: String,
+        msg: String,
+    },
+    PluginDelayCall {
+        delay_ms: u64,
+        plugin_id: String,
+        fn_name: String,
+    },
 }
 
 pub struct Core {
@@ -99,10 +108,20 @@ impl Core {
 
         info!("found {} plugins: {:?}", rhai_plugins.len(), rhai_plugins);
 
-        let rhai_plugins = rhai_plugins
+        info!("loading plugins...");
+        let mut rhai_plugins = rhai_plugins
             .into_iter()
-            .map(|path| RhaiPlugin::from_file(path))
+            .map(|path| {
+                let t = Instant::now();
+                let plugin = RhaiPlugin::from_file(path);
+                info!("loaded {}, cost {:?}", plugin.id(), t.elapsed());
+                plugin
+            })
             .collect::<Vec<RhaiPlugin>>();
+        info!("all plugin loaded");
+        for plugin in &mut rhai_plugins {
+            plugin.on_load(server.clone());
+        }
 
         let mut plugins: Vec<Box<dyn Plugin + Send>> =
             vec![Box::new(ScoreBoard::init(server.clone()).await)];
@@ -111,6 +130,7 @@ impl Core {
                 .into_iter()
                 .map(|p| Box::new(p) as Box<dyn Plugin + Send>),
         );
+        let plugins = Arc::new(Mutex::new(plugins));
 
         let (command_tx, command_rx) = mpsc::channel::<String>();
 
@@ -137,13 +157,37 @@ impl Core {
         tokio::spawn(async move {
             while let Some(event) = event_rx.recv().await {
                 match event {
+                    Event::PluginDelayCall {
+                        delay_ms,
+                        plugin_id,
+                        fn_name,
+                    } => {
+                        info!(
+                            "delay call {} {} {}, waiting...",
+                            delay_ms, plugin_id, fn_name
+                        );
+                        let _plugins = plugins.clone();
+                        let _server = _server.clone();
+                        tokio::spawn(async move {
+                            tokio::time::sleep(Duration::from_millis(delay_ms)).await;
+                            info!("delay call {} {} {}", delay_ms, plugin_id, fn_name);
+                            let mut plugins = _plugins.lock().unwrap();
+                            let plugins: &mut Vec<Box<dyn Plugin + Send>> = plugins.as_mut();
+                            plugins
+                                .iter_mut()
+                                .find(|p| p.id() == plugin_id)
+                                .and_then(|p| Some(p.call_fn(fn_name, _server)));
+                        });
+                    }
                     Event::ServerDown => {
                         _server.handle_event(event);
                     }
                     Event::ServerLog(msg) => {
                         println!("{msg}");
 
-                        for plugin in &mut plugins {
+                        let mut plugins = plugins.lock().unwrap();
+                        let plugins: &mut Vec<Box<dyn Plugin + Send>> = plugins.as_mut();
+                        for plugin in plugins {
                             plugin.on_server_log(_server.clone(), msg.clone());
                         }
                     }
@@ -155,7 +199,9 @@ impl Core {
                         }
                     }
                     Event::ServerDone => {
-                        for plugin in &mut plugins {
+                        let mut plugins = plugins.lock().unwrap();
+                        let plugins: &mut Vec<Box<dyn Plugin + Send>> = plugins.as_mut();
+                        for plugin in plugins {
                             plugin.on_server_done(_server.clone());
                         }
                     }

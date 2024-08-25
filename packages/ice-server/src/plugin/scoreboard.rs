@@ -75,8 +75,8 @@ impl ScoreBoard {
 }
 
 impl Plugin for ScoreBoard {
-    fn id(&self) -> String {
-        "scoreboard".to_string()
+    fn id(&self) -> &str {
+        "scoreboard"
     }
 
     // When read scoreboard objectives list output, update state

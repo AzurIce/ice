@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use minecraft_server::MinecraftServer;
 use rhai::{CustomType, TypeBuilder};
-use tracing::error;
+use tracing::{error, info};
 
 use crate::{config::Config, Event};
 
@@ -30,6 +30,7 @@ impl Server {
     }
 
     pub fn start(&mut self) -> Result<(), String> {
+        info!("[server]: start");
         let mut server = self.minecraft_server.lock().unwrap();
         if server.is_some() {
             error!("server is already running");
@@ -41,6 +42,20 @@ impl Server {
             ));
             Ok(())
         }
+    }
+
+    pub fn delay_call(&mut self, delay_ms: i64, plugin_id: String, fn_name: String) {
+        info!(
+            "[server]: delay_call {} {} {}",
+            delay_ms, plugin_id, fn_name
+        );
+        self.event_tx
+            .send(Event::PluginDelayCall {
+                delay_ms: delay_ms as u64,
+                plugin_id,
+                fn_name,
+            })
+            .unwrap();
     }
 
     pub fn stop(&mut self) -> Result<(), String> {
