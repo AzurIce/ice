@@ -35,6 +35,7 @@
             # pkg-config
             extism-cli
             curl
+            git-cliff
             (rust-bin.nightly.latest.default.override {
               extensions = [ "rust-src" ];
               targets = [ "wasm32-unknown-unknown" ];
