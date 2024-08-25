@@ -13,6 +13,7 @@ use command::{bkarch::BkArch, bksnap::BkSnap, Command};
 
 use plugin::{scoreboard::ScoreBoard, Plugin, RhaiPlugin};
 use server::Server;
+use std::any::Any;
 use tracing::info;
 
 pub mod command;
@@ -28,6 +29,7 @@ macro_rules! include_plugin {
 
 const BUILTIN_PLUGINS: &[(&[u8], &str)] = &[include_plugin!("here.rhai")];
 
+#[derive(Debug, Clone)]
 pub enum Event {
     ServerDown,
     ServerDone,
@@ -123,12 +125,12 @@ impl Core {
             plugin.on_load(server.clone());
         }
 
-        let mut plugins: Vec<Box<dyn Plugin + Send>> =
+        let mut plugins: Vec<Box<dyn Plugin>> =
             vec![Box::new(ScoreBoard::init(server.clone()).await)];
         plugins.extend(
             rhai_plugins
                 .into_iter()
-                .map(|p| Box::new(p) as Box<dyn Plugin + Send>),
+                .map(|p| Box::new(p) as Box<dyn Plugin>),
         );
         let plugins = Arc::new(Mutex::new(plugins));
 
@@ -156,7 +158,7 @@ impl Core {
         let mut _server = server.clone();
         tokio::spawn(async move {
             while let Some(event) = event_rx.recv().await {
-                match event {
+                match event.clone() {
                     Event::PluginDelayCall {
                         delay_ms,
                         plugin_id,
@@ -172,24 +174,20 @@ impl Core {
                             tokio::time::sleep(Duration::from_millis(delay_ms)).await;
                             info!("delay call {} {} {}", delay_ms, plugin_id, fn_name);
                             let mut plugins = _plugins.lock().unwrap();
-                            let plugins: &mut Vec<Box<dyn Plugin + Send>> = plugins.as_mut();
-                            plugins
+                            if let Some(plugin) = plugins
                                 .iter_mut()
                                 .find(|p| p.id() == plugin_id)
-                                .and_then(|p| Some(p.call_fn(fn_name, _server)));
+                                .and_then(|p| (p as &mut dyn Any).downcast_mut::<RhaiPlugin>())
+                            {
+                                plugin.call_fn(fn_name, (_server,))
+                            }
                         });
                     }
                     Event::ServerDown => {
-                        _server.handle_event(event);
+                        _server.handle_event(event.clone());
                     }
                     Event::ServerLog(msg) => {
                         println!("{msg}");
-
-                        let mut plugins = plugins.lock().unwrap();
-                        let plugins: &mut Vec<Box<dyn Plugin + Send>> = plugins.as_mut();
-                        for plugin in plugins {
-                            plugin.on_server_log(_server.clone(), msg.clone());
-                        }
                     }
                     Event::PlayerMessage { player: _, msg } => {
                         if msg.starts_with("#") {
@@ -199,12 +197,12 @@ impl Core {
                         }
                     }
                     Event::ServerDone => {
-                        let mut plugins = plugins.lock().unwrap();
-                        let plugins: &mut Vec<Box<dyn Plugin + Send>> = plugins.as_mut();
-                        for plugin in plugins {
-                            plugin.on_server_done(_server.clone());
-                        }
+                        info!("server done");
                     }
+                }
+
+                for plugin in plugins.lock().unwrap().iter_mut() {
+                    plugin.handle_event(_server.clone(), event.clone());
                 }
             }
         });

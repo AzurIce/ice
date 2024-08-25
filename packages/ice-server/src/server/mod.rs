@@ -86,7 +86,7 @@ impl Server {
 
     pub fn say<S: AsRef<str>>(&mut self, content: S) {
         let content = content.as_ref();
-        println!("{content}");
+        println!("say {content}");
         if let Some(server) = self.minecraft_server.lock().unwrap().as_mut() {
             server.writeln(format!("say {}", content).as_str());
         }
