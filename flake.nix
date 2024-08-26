@@ -10,7 +10,6 @@
     ];
   };
 
-
   inputs = {
     nixpkgs.url      = "github:NixOS/nixpkgs/nixos-unstable";
     rust-overlay.url = "github:oxalica/rust-overlay";
@@ -38,7 +37,7 @@
             git-cliff
             (rust-bin.nightly.latest.default.override {
               extensions = [ "rust-src" ];
-              targets = [ "wasm32-unknown-unknown" ];
+              targets = [ "wasm32-wasip1" ];
             })
           ]
           ++

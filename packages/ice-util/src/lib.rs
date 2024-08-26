@@ -3,11 +3,21 @@ pub mod path;
 pub mod regex;
 pub mod time;
 
-use std::path::Path;
+use std::{io::Write, path::Path};
 
 use futures_util::StreamExt;
+use reqwest::Response;
 use std::error::Error;
-use tokio::io::AsyncWriteExt;
+
+pub fn reqwest_get_blocking<S: AsRef<str>>(url: S) -> Result<Response, Box<dyn Error>> {
+    let url = url.as_ref();
+    let res = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(reqwest::get(url))?;
+    Ok(res)
+}
 
 pub fn download_from_url_blocking<S: AsRef<str>, P: AsRef<Path>>(
     url: S,
@@ -34,13 +44,13 @@ pub async fn download_from_url<S: AsRef<str>, P: AsRef<Path>>(
     let total_bytes = res.content_length().unwrap();
     let mut downloaded_bytes = 0;
 
-    let mut file = tokio::fs::File::create(path).await?;
+    let mut file = std::fs::File::create(path)?;
 
     let mut stream = res.bytes_stream();
     while let Some(bytes) = stream.next().await {
         match bytes {
             Ok(bytes) => {
-                file.write_all(&bytes).await?;
+                file.write_all(&bytes)?;
                 downloaded_bytes += bytes.len() as u64;
                 on_progress((downloaded_bytes, total_bytes));
             }

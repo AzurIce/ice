@@ -7,7 +7,7 @@ use std::{
     process::Command,
 };
 
-use ice_util::download_from_url_blocking;
+use ice_util::{download_from_url_blocking, reqwest_get_blocking};
 use log::info;
 use serde::{Deserialize, Serialize};
 
@@ -72,7 +72,10 @@ impl Loader {
 
         let ice_dir = current_dir.join(".ice");
         fs::create_dir_all(&ice_dir).unwrap();
-        let res = reqwest::blocking::get(
+        // let res = reqwest::blocking::get(
+        //     "https://quiltmc.org/api/v1/download-latest-installer/java-universal",
+        // )?;
+        let res = reqwest_get_blocking(
             "https://quiltmc.org/api/v1/download-latest-installer/java-universal",
         )?;
 
@@ -111,7 +114,10 @@ impl Loader {
             Self::Quilt => {
                 // 下载 Quilt installer
                 info!("fetching quilt install info...");
-                let res = reqwest::blocking::get(
+                // let res = reqwest::blocking::get(
+                //     "https://quiltmc.org/api/v1/download-latest-installer/java-universal",
+                // )?;
+                let res = reqwest_get_blocking(
                     "https://quiltmc.org/api/v1/download-latest-installer/java-universal",
                 )?;
 

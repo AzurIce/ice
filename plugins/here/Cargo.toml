@@ -1,0 +1,17 @@
+[package]
+name = "here"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+ice-server.workspace = true
+ice-core.workspace = true
+
+[dev-dependencies]
+wasi-common = "24.0.0"
+wasmtime = "24.0.0"
+wasmtime-wasi = "24.0.0"
+tokio = { version = "1.39.3", features = ["sync"] }

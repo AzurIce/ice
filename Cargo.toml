@@ -25,7 +25,7 @@ tokio = { version = "1.38.1", features = ["full"] }
 
 
 [workspace]
-members = ["packages/*"]
+members = ["packages/*", "plugins/here"]
 
 [workspace.dependencies]
 ice-server = { path = "packages/ice-server" }
