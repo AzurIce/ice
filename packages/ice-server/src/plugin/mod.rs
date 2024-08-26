@@ -123,3 +123,20 @@ impl Plugin for RhaiPlugin {
         self.call_fn("on_player_message", (server, player, msg));
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::{env, process::Command};
+
+    use pyo3::prelude::*;
+
+    #[test]
+    fn foo() {
+        env::set_current_dir("plugins/py-here").unwrap();
+        pyo3::prepare_freethreaded_python();
+        Python::with_gil(|py| {
+            let module = PyModule::import_bound(py, "numpy").expect("failed to import requests");
+            py.eval_bound("print('hello from pyo3')", None, None).unwrap();
+        });
+    }
+}

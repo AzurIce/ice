@@ -14,3 +14,4 @@ toml = "0.8.15"
 tokio = { version = "1.39.2", features = ["full"] }
 tracing = "0.1.40"
 rhai = { version = "1.19.0", features = ["sync"] }
+pyo3 = "0.22.2"
