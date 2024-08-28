@@ -769,6 +769,7 @@ dependencies = [
  "log",
  "regex",
  "rhai",
+ "rhai-fs",
  "serde",
  "tokio",
  "toml",
@@ -1264,6 +1265,17 @@ dependencies = [
  "smallvec",
  "smartstring",
  "thin-vec",
+]
+
+[[package]]
+name = "rhai-fs"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9af3f7717d7194033924473b3e4f0b3dbd569e3528837c3fbb00b4e1d1c6ff16"
+dependencies = [
+ "rhai",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

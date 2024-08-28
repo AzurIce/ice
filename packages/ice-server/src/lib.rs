@@ -85,7 +85,9 @@ impl Core {
         }
 
         // initialize builtin plugins
-        fs::create_dir_all(&plugins_dir).unwrap();
+        if !plugins_dir.exists() {
+            fs::create_dir_all(&plugins_dir).unwrap();
+        }
         for (builtin_plugin, filename) in BUILTIN_PLUGINS {
             let path = plugins_dir.join(filename);
             // if !path.exists() {
@@ -115,14 +117,14 @@ impl Core {
             .into_iter()
             .map(|path| {
                 let t = Instant::now();
-                let plugin = RhaiPlugin::from_file(path);
+                let plugin = RhaiPlugin::from_file(server.clone(), path);
                 info!("loaded {}, cost {:?}", plugin.id(), t.elapsed());
                 plugin
             })
             .collect::<Vec<RhaiPlugin>>();
         info!("all plugin loaded");
         for plugin in &mut rhai_plugins {
-            plugin.on_load(server.clone());
+            plugin.on_load();
         }
 
         let mut plugins: Vec<Box<dyn Plugin>> =

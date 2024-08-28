@@ -1,7 +1,6 @@
 use std::sync::{Arc, Mutex};
 
 use minecraft_server::MinecraftServer;
-use rhai::{CustomType, TypeBuilder};
 use tracing::{error, info};
 
 use crate::{config::Config, Event};
@@ -9,7 +8,7 @@ use crate::{config::Config, Event};
 pub mod minecraft_server;
 pub mod regex;
 
-#[derive(Clone, CustomType)]
+#[derive(Clone)]
 pub struct Server {
     config: Config,
     event_tx: tokio::sync::mpsc::UnboundedSender<Event>,
@@ -25,11 +24,11 @@ impl Server {
         }
     }
 
-    pub fn running(&mut self) -> bool {
+    pub fn running(&self) -> bool {
         self.minecraft_server.lock().unwrap().is_some()
     }
 
-    pub fn start(&mut self) -> Result<(), String> {
+    pub fn start(&self) -> Result<(), String> {
         info!("[server]: start");
         let mut server = self.minecraft_server.lock().unwrap();
         if server.is_some() {
@@ -44,7 +43,7 @@ impl Server {
         }
     }
 
-    pub fn delay_call(&mut self, delay_ms: i64, plugin_id: String, fn_name: String) {
+    pub fn delay_call(&self, delay_ms: i64, plugin_id: String, fn_name: String) {
         info!(
             "[server]: delay_call {} {} {}",
             delay_ms, plugin_id, fn_name
@@ -58,7 +57,7 @@ impl Server {
             .unwrap();
     }
 
-    pub fn stop(&mut self) -> Result<(), String> {
+    pub fn stop(&self) -> Result<(), String> {
         if let Some(server) = self.minecraft_server.lock().unwrap().as_mut() {
             server.writeln("stop");
             Ok(())
@@ -68,7 +67,7 @@ impl Server {
         }
     }
 
-    pub fn handle_event(&mut self, event: Event) {
+    pub fn handle_event(&self, event: Event) {
         match event {
             Event::ServerDown => {
                 *self.minecraft_server.lock().unwrap() = None;
@@ -77,14 +76,14 @@ impl Server {
         }
     }
 
-    pub fn writeln(&mut self, line: &str) {
+    pub fn writeln(&self, line: &str) {
         let mut server = self.minecraft_server.lock().unwrap();
         if let Some(server) = server.as_mut() {
             server.writeln(line)
         }
     }
 
-    pub fn say<S: AsRef<str>>(&mut self, content: S) {
+    pub fn say<S: AsRef<str>>(&self, content: S) {
         let content = content.as_ref();
         println!("say {content}");
         if let Some(server) = self.minecraft_server.lock().unwrap().as_mut() {
