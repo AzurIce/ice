@@ -7,7 +7,7 @@ use ice::api::mojang::get_latest_version;
 use ice_core::Loader;
 use ice_server::{config::Config, Core};
 use tracing::{info, Level};
-use tracing_subscriber::FmtSubscriber;
+use tracing_subscriber::{filter, EnvFilter, FmtSubscriber, Layer};
 
 #[tokio::main]
 pub async fn new<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
@@ -59,6 +59,9 @@ pub async fn run<P: AsRef<Path>>(current_dir: P) {
         // all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)
         // will be written to stdout.
         .with_max_level(Level::TRACE)
+        .with_env_filter(
+            EnvFilter::from_default_env().add_directive("ice-server=info".parse().unwrap()),
+        )
         // completes the builder.
         .finish();
 

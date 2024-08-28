@@ -14,3 +14,6 @@ toml = "0.8.15"
 tokio = { version = "1.39.2", features = ["full"] }
 tracing = "0.1.40"
 rhai = { version = "1.19.0", features = ["sync"] }
+rune = "0.13.4"
+serde_json = "1.0.127"
+bitcode = { version = "0.6.3", features = ["serde"] }

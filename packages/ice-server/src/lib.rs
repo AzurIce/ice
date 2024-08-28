@@ -11,7 +11,7 @@ use std::{
 use crate::config::Config;
 use command::{bkarch::BkArch, bksnap::BkSnap, Command};
 
-use plugin::{scoreboard::ScoreBoard, Plugin, RhaiPlugin};
+use plugin::{rune_plugin::RunePlugin, scoreboard::ScoreBoard, Plugin, RhaiPlugin};
 use server::Server;
 use std::any::Any;
 use tracing::info;
@@ -27,7 +27,8 @@ macro_rules! include_plugin {
     };
 }
 
-const BUILTIN_PLUGINS: &[(&[u8], &str)] = &[include_plugin!("here.rhai")];
+const BUILTIN_RHAI_PLUGINS: &[(&[u8], &str)] =
+    &[include_plugin!("here.rhai"), include_plugin!("here.rn")];
 
 #[derive(Debug, Clone)]
 pub enum Event {
@@ -86,7 +87,7 @@ impl Core {
 
         // initialize builtin plugins
         fs::create_dir_all(&plugins_dir).unwrap();
-        for (builtin_plugin, filename) in BUILTIN_PLUGINS {
+        for (builtin_plugin, filename) in BUILTIN_RHAI_PLUGINS {
             let path = plugins_dir.join(filename);
             // if !path.exists() {
             fs::write(path, builtin_plugin).unwrap();
@@ -108,27 +109,72 @@ impl Core {
             .map(|entry| entry.path())
             .collect::<Vec<PathBuf>>();
 
-        info!("found {} plugins: {:?}", rhai_plugins.len(), rhai_plugins);
+        info!(
+            "found {} rhai plugins: {:?}",
+            rhai_plugins.len(),
+            rhai_plugins
+        );
 
-        info!("loading plugins...");
+        info!("loading rhai plugins...");
         let mut rhai_plugins = rhai_plugins
             .into_iter()
             .map(|path| {
                 let t = Instant::now();
-                let plugin = RhaiPlugin::from_file(path);
+                let plugin = RhaiPlugin::from_file(server.clone(), path);
                 info!("loaded {}, cost {:?}", plugin.id(), t.elapsed());
                 plugin
             })
             .collect::<Vec<RhaiPlugin>>();
         info!("all plugin loaded");
         for plugin in &mut rhai_plugins {
-            plugin.on_load(server.clone());
+            plugin.on_load();
+        }
+
+        // get plugins paths
+        let rune_plugins = fs::read_dir(&plugins_dir)
+            .unwrap()
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| {
+                entry
+                    .path()
+                    .extension()
+                    .map(|s| s.to_str().unwrap())
+                    .unwrap_or("")
+                    == "rn"
+            })
+            .map(|entry| entry.path())
+            .collect::<Vec<PathBuf>>();
+
+        info!(
+            "found {} rune plugins: {:?}",
+            rune_plugins.len(),
+            rune_plugins
+        );
+
+        info!("loading rhai plugins...");
+        let mut rune_plugins = rune_plugins
+            .into_iter()
+            .map(|path| {
+                let t = Instant::now();
+                let plugin = RunePlugin::from_file(server.clone(), path);
+                info!("loaded {}, cost {:?}", plugin.id(), t.elapsed());
+                plugin
+            })
+            .collect::<Vec<RunePlugin>>();
+        info!("all plugin loaded");
+        for plugin in &mut rune_plugins {
+            plugin.on_load();
         }
 
         let mut plugins: Vec<Box<dyn Plugin>> =
             vec![Box::new(ScoreBoard::init(server.clone()).await)];
         plugins.extend(
             rhai_plugins
+                .into_iter()
+                .map(|p| Box::new(p) as Box<dyn Plugin>),
+        );
+        plugins.extend(
+            rune_plugins
                 .into_iter()
                 .map(|p| Box::new(p) as Box<dyn Plugin>),
         );
@@ -202,7 +248,7 @@ impl Core {
                 }
 
                 for plugin in plugins.lock().unwrap().iter_mut() {
-                    plugin.handle_event(_server.clone(), event.clone());
+                    plugin.handle_event(event.clone());
                 }
             }
         });

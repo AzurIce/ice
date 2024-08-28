@@ -1,5 +1,5 @@
 fn id() {
-    "here"
+    "here_rhai"
 }
 
 let here_user = 0;

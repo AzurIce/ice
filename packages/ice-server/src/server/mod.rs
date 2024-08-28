@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use minecraft_server::MinecraftServer;
 use rhai::{CustomType, TypeBuilder};
+use rune::Any;
 use tracing::{error, info};
 
 use crate::{config::Config, Event};
@@ -9,15 +10,17 @@ use crate::{config::Config, Event};
 pub mod minecraft_server;
 pub mod regex;
 
-#[derive(Clone, CustomType)]
+/// Server is [`Send`] and [`Sync`]
+#[derive(Clone, CustomType, Any)]
 pub struct Server {
-    config: Config,
+    config: Arc<Config>,
     event_tx: tokio::sync::mpsc::UnboundedSender<Event>,
     minecraft_server: Arc<Mutex<Option<MinecraftServer>>>,
 }
 
 impl Server {
     pub fn new(config: Config, event_tx: tokio::sync::mpsc::UnboundedSender<Event>) -> Self {
+        let config = Arc::new(config);
         Self {
             config,
             event_tx,
@@ -25,11 +28,11 @@ impl Server {
         }
     }
 
-    pub fn running(&mut self) -> bool {
+    pub fn running(&self) -> bool {
         self.minecraft_server.lock().unwrap().is_some()
     }
 
-    pub fn start(&mut self) -> Result<(), String> {
+    pub fn start(&self) -> Result<(), String> {
         info!("[server]: start");
         let mut server = self.minecraft_server.lock().unwrap();
         if server.is_some() {
@@ -37,7 +40,7 @@ impl Server {
             Err(format!("server is already running"))
         } else {
             *server = Some(MinecraftServer::run(
-                self.config.clone(),
+                self.config.as_ref(),
                 self.event_tx.clone(),
             ));
             Ok(())

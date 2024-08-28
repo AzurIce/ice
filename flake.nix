@@ -33,22 +33,25 @@
             # libusb1
             # openssl
             # pkg-config
-            extism-cli
+            libiconv
             curl
             git-cliff
             (rust-bin.nightly.latest.default.override {
               extensions = [ "rust-src" ];
-              targets = [ "wasm32-unknown-unknown" ];
             })
           ]
           ++
-          (with pkgs.darwin.apple_sdk.frameworks; pkgs.lib.optionals pkgs.stdenv.isDarwin [
+          (pkgs.lib.optionals pkgs.stdenv.isDarwin(with pkgs.darwin.apple_sdk.frameworks; [
             SystemConfiguration
           #   IOKit
             Security
             CoreFoundation
           #   AppKit
-          ])
+          ]
+          ++ 
+          [
+            libiconv-darwin
+          ]))
           ;
         };
       }

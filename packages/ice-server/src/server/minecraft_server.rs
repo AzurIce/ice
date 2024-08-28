@@ -15,7 +15,7 @@ pub struct MinecraftServer {
 }
 
 impl MinecraftServer {
-    pub fn run(config: Config, event_tx: tokio::sync::mpsc::UnboundedSender<Event>) -> Self {
+    pub fn run(config: &Config, event_tx: tokio::sync::mpsc::UnboundedSender<Event>) -> Self {
         info!("Server::start");
         let jar_filename = match config.loader {
             Loader::Quilt => "quilt-server-launch.jar",

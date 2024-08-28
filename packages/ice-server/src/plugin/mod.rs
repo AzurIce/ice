@@ -1,4 +1,5 @@
 pub mod lib;
+pub mod rune_plugin;
 pub mod scoreboard;
 
 #[allow(unused)]
@@ -15,16 +16,16 @@ use crate::{server::Server, Event};
 #[allow(unused)]
 pub trait Plugin: Any + Send + Sync {
     fn id(&self) -> &str;
-    fn on_server_log(&mut self, server: Server, content: String) {}
-    fn on_server_done(&mut self, server: Server) {}
-    fn on_player_message(&mut self, server: Server, player: String, msg: String) {}
-    fn on_load(&mut self, server: Server) {}
+    fn on_server_log(&mut self, content: String) {}
+    fn on_server_done(&mut self) {}
+    fn on_player_message(&mut self, player: String, msg: String) {}
+    fn on_load(&mut self) {}
 
-    fn handle_event(&mut self, server: Server, event: Event) {
+    fn handle_event(&mut self, event: Event) {
         match event {
-            Event::ServerLog(content) => self.on_server_log(server, content),
-            Event::ServerDone => self.on_server_done(server),
-            Event::PlayerMessage { player, msg } => self.on_player_message(server, player, msg),
+            Event::ServerLog(content) => self.on_server_log(content),
+            Event::ServerDone => self.on_server_done(),
+            Event::PlayerMessage { player, msg } => self.on_player_message(player, msg),
             _ => (),
         }
     }
@@ -35,6 +36,7 @@ pub trait Plugin: Any + Send + Sync {
 
 pub struct RhaiPlugin {
     id: String,
+    server: Server,
     engine: Engine,
     scope: Scope<'static>,
     ast: AST,
@@ -47,7 +49,7 @@ impl RhaiPlugin {
         first eval and id cost: 457.25µs
         register type and fn cost: 236.625µs
     */
-    pub fn from_file(path: PathBuf) -> Self {
+    pub fn from_file(server: Server, path: PathBuf) -> Self {
         // let t = Instant::now();
         let mut engine = engine_with_lib();
         // println!("engine initializing cost: {:?}", t.elapsed());
@@ -77,6 +79,7 @@ impl RhaiPlugin {
 
         Self {
             id,
+            server,
             engine,
             scope,
             ast,
@@ -107,19 +110,19 @@ impl Plugin for RhaiPlugin {
         &self.id
     }
 
-    fn on_load(&mut self, server: Server) {
-        self.call_fn("on_load", (server,));
+    fn on_load(&mut self) {
+        self.call_fn("on_load", (self.server.clone(),));
     }
 
-    fn on_server_log(&mut self, server: Server, content: String) {
-        self.call_fn("on_server_log", (server, content));
+    fn on_server_log(&mut self, content: String) {
+        self.call_fn("on_server_log", (self.server.clone(), content));
     }
 
-    fn on_server_done(&mut self, server: Server) {
-        self.call_fn("on_server_done", (server,));
+    fn on_server_done(&mut self) {
+        self.call_fn("on_server_done", (self.server.clone(),));
     }
 
-    fn on_player_message(&mut self, server: Server, player: String, msg: String) {
-        self.call_fn("on_player_message", (server, player, msg));
+    fn on_player_message(&mut self, player: String, msg: String) {
+        self.call_fn("on_player_message", (self.server.clone(), player, msg));
     }
 }
