@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-/// A minecraft text component
+/// Different representations of a minecraft text component
 ///
 /// See https://zh.minecraft.wiki/w/%E6%96%87%E6%9C%AC%E7%BB%84%E4%BB%B6
 #[derive(Clone)]
@@ -74,6 +74,7 @@ pub struct ComponentObject {
 }
 
 impl ComponentObject {
+    /// create a [`ComponentContent::Text`]
     pub fn text<T: Display>(text: T) -> Self {
         Self {
             content: ComponentContent::Text {
