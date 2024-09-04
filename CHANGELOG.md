@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.27](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.26..0.1.0-alpha.27) - 2024-09-04
+
+### <!-- 0 -->🎈 Features
+
+
+- Basic support of text component and tellraw - ([eb5823f](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/eb5823f02ebb452e6db9c40471e9ee47e42cacf9))
+- Click_event and hover_event for text component - ([bb268fa](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/bb268fa86fee92e140f2d72bd7bcd2ff4cfe3398))
+- Improved here with rtext and tellraw - ([91375b5](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/91375b5f930ac2145e00ed6c1ae1ac499c50d64a))
+
+### <!-- 2 --> Refactor
+
+
+- Refactor plugins api - ([20aed66](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/20aed665b44a28ddd6306dd132a64ed27fe12cfe))
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+
+
+- Update flake.nix - ([16709b2](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/16709b2822a0da3656687e06e7a593918693b497))
+
 ## [0.1.0-alpha.26](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.25..0.1.0-alpha.26) - 2024-08-25
 
 ### <!-- 0 -->🎈 Features
