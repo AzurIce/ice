@@ -2,6 +2,7 @@ pub mod fs;
 pub mod path;
 pub mod regex;
 pub mod time;
+pub mod minecraft;
 
 use std::path::Path;
 

@@ -27,7 +27,8 @@ macro_rules! include_plugin {
     };
 }
 
-const BUILTIN_PLUGINS: &[(&[u8], &str)] = &[include_plugin!("here.rhai")];
+const BUILTIN_PLUGINS: &[(&[u8], &str)] =
+    &[include_plugin!("here.rhai"), include_plugin!("rtext.rhai")];
 
 #[derive(Debug, Clone)]
 pub enum Event {

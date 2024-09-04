@@ -1,5 +1,7 @@
 use std::{path::PathBuf, time::Instant};
 
+use ice_util::minecraft::rtext::{Component, ComponentObject};
+use minecraft_rtext::MinecraftRtextPackage;
 use rhai::{
     packages::Package, CustomType, Engine, EvalAltResult, FuncArgs, Scope, TypeBuilder, AST,
 };
@@ -7,9 +9,14 @@ use rhai_fs::FilesystemPackage;
 use tracing::error;
 
 mod regex;
+pub mod minecraft_rtext;
 
 pub fn engine_with_lib() -> Engine {
     let mut engine = Engine::new();
+
+    let pkg = MinecraftRtextPackage::new();
+    pkg.register_into_engine(&mut engine);
+
     engine.register_static_module("regex", rhai::exported_module!(regex::module).into());
     let package = FilesystemPackage::new();
     package.register_into_engine(&mut engine);
@@ -141,6 +148,10 @@ impl Server {
         self.inner.delay_call(delay_ms, plugin_id, fn_name)
     }
 
+    pub fn tellraw<T: Into<Component>>(&mut self, target: String, component: T) {
+        self.inner.tellraw(target, component)
+    }
+
     fn build_extra(builder: &mut TypeBuilder<Self>) {
         builder
             .with_fn("start", Self::start)
@@ -148,6 +159,11 @@ impl Server {
             .with_fn("delay_call", Self::delay_call)
             .with_fn("running", Self::running)
             .with_fn("say", Self::say)
-            .with_fn("writeln", Self::writeln);
+            .with_fn("writeln", Self::writeln)
+            .with_fn("tellraw", Self::tellraw::<String>)
+            .with_fn("tellraw", Self::tellraw::<f64>)
+            .with_fn("tellraw", Self::tellraw::<bool>)
+            .with_fn("tellraw", Self::tellraw::<ComponentObject>)
+            .with_fn("tellraw", Self::tellraw::<Vec<ComponentObject>>);
     }
 }

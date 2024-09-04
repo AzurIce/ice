@@ -1,10 +1,13 @@
 use std::{
-    io::{self, BufRead, Write}, process::{ChildStdin, Command, Stdio}, thread
+    io::{self, BufRead, Write},
+    process::{ChildStdin, Command, Stdio},
+    thread,
 };
 
-use ice_core::Loader;
-use log::{error, info};
 use super::regex::{done_regex, player_regex};
+use ice_core::Loader;
+use ice_util::minecraft::rtext::{build_component, Component};
+use log::{error, info};
 
 use crate::config::Config;
 
@@ -99,5 +102,12 @@ impl MinecraftServer {
     pub fn say<S: AsRef<str>>(&mut self, content: S) {
         let content = content.as_ref();
         self.writeln(format!("say {}", content).as_str());
+    }
+
+    pub fn tellraw(&mut self, target: impl AsRef<str>, component: impl Into<Component>) {
+        let target = target.as_ref();
+        let component = component.into();
+        let component = build_component(component);
+        self.writeln(format!("tellraw {target} {component}").as_str());
     }
 }

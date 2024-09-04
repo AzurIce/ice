@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use ice_util::minecraft::rtext::{build_component, Component};
 use minecraft_server::MinecraftServer;
 use tracing::{error, info};
 
@@ -88,6 +89,15 @@ impl Server {
         println!("say {content}");
         if let Some(server) = self.minecraft_server.lock().unwrap().as_mut() {
             server.writeln(format!("say {}", content).as_str());
+        }
+    }
+
+
+    pub fn tellraw<T: Into<Component>>(&mut self, target: String, component: T) {
+        let component = component.into();
+        println!("tellraw {target} {}", build_component(component.clone()));
+        if let Some(server) = self.minecraft_server.lock().unwrap().as_mut() {
+            server.tellraw(target, component);
         }
     }
 }
