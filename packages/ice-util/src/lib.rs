@@ -10,6 +10,15 @@ use futures_util::StreamExt;
 use std::error::Error;
 use tokio::io::AsyncWriteExt;
 
+pub fn get_parent_version(version: String) -> String {
+    let x = version.rfind(".");
+    if let Some(x) = x {
+        version[..x].to_string()
+    } else {
+        version
+    }
+}
+
 pub fn download_from_url_blocking<S: AsRef<str>, P: AsRef<Path>>(
     url: S,
     path: P,

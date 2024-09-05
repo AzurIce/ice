@@ -17,7 +17,7 @@ use ice::{
     config::ModConfig,
 };
 use ice_core::Loader;
-use ice_util::fs::get_sha1_hash;
+use ice_util::{fs::get_sha1_hash, get_parent_version};
 use tokio::task::JoinSet;
 
 /// Initialize a `mods.toml` under `current_dir`
@@ -87,14 +87,30 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &ModConfig) {
                         || !loaders.iter().any(|l| cur_version.loaders.contains(l))
                         || !cur_version.game_versions.contains(&game_version)
                     {
-                        let latest_version = api::modrinth::get_latest_version_from_hash(
-                            hash,
+                        let mut latest_version = api::modrinth::get_latest_version_from_hash(
+                            hash.clone(),
                             HashMethod::Sha1,
                             &loaders,
-                            game_version,
+                            game_version.clone(),
                         )
                         .await
-                        .unwrap();
+                        .map_err(|err| format!("failed to get latest version from hash: {err}"));
+                        if let Err(err) = latest_version {
+                            let pv = get_parent_version(game_version);
+                            cprintln!("failed to get exact version: {err}, trying to get {pv}");
+                            latest_version = api::modrinth::get_latest_version_from_hash(
+                                hash,
+                                HashMethod::Sha1,
+                                &loaders,
+                                pv,
+                            )
+                            .await
+                            .map_err(|err| {
+                                format!("failed to get latest version from hash: {err}")
+                            });
+                        }
+                        let latest_version = latest_version?;
+
                         let version_file = latest_version.get_primary_file();
                         download_version_file(version_file, &current_dir)
                             .await
@@ -149,9 +165,22 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &ModConfig) {
         let version_number = version_number.to_owned();
         let current_dir = current_dir.to_owned();
         join_set.spawn(async move {
-            let versions = get_project_versions(&slug, Some(&loaders), Some(game_version.clone()))
-                .await
-                .map_err(|err| format!("failed to get project versions: {err}"))?;
+            let mut versions =
+                get_project_versions(&slug, Some(&loaders), Some(game_version.clone()))
+                    .await
+                    .map_err(|err| format!("failed to get project versions: {err}"))?;
+            if versions
+                .iter()
+                .find(|v| v.version_number == version_number)
+                .is_none()
+            {
+                let pv = get_parent_version(game_version);
+                cprintln!("failed to get exact version, trying to get {pv}");
+                versions = get_project_versions(&slug, Some(&loaders), Some(pv))
+                    .await
+                    .map_err(|err| format!("failed to get project versions: {err}"))?;
+            }
+
             if let Some(version) = versions
                 .into_iter()
                 .find(|v| v.version_number == version_number)
@@ -225,11 +254,24 @@ pub async fn update<P1: AsRef<Path>, P2: AsRef<Path>>(
         join_set.spawn(async move {
             let project = api::modrinth::get_project(cur_version.project_id)
                 .await
-                .map_err(|err| format!("failed to get project: {err}"))?;
-            let version =
-                get_latest_version_from_hash(hash, HashMethod::Sha1, &loaders, game_version)
+                .map_err(|err| format!("{path:?}: {err}"))?;
+            let mut version = get_latest_version_from_hash(
+                hash.clone(),
+                HashMethod::Sha1,
+                &loaders,
+                game_version.clone(),
+            )
+            .await
+            .map_err(|err| format!("{path:?}: {err}"));
+            if let Err(err) = version {
+                let pv = get_parent_version(game_version);
+                cprintln!("failed to get exact version: {err}, trying to get {pv}");
+                version = get_latest_version_from_hash(hash, HashMethod::Sha1, &loaders, pv)
                     .await
-                    .map_err(|err| format!("failed to get latest version: {err}"))?;
+                    .map_err(|err| format!("{path:?}: {err}"));
+            }
+            let version = version?;
+
             if version.id == cur_version.id {
                 Ok(UpdateRes::Unchanged(
                     project.slug,
@@ -301,9 +343,19 @@ pub async fn add<P1: AsRef<Path>, P2: AsRef<Path>>(
             if let Some(version) = mods.get(&slug) {
                 return Ok(AddRes::AlreadyExist(slug.clone(), version.clone()));
             }
-            let version = get_latest_version_from_slug(&slug, loaders, game_version)
-                .await
-                .map_err(|err| format!("failed to get latest version from slug: {err}"))?;
+            let mut version =
+                get_latest_version_from_slug(&slug, loaders.clone(), game_version.clone())
+                    .await
+                    .map_err(|err| format!("{slug}: {err}"));
+            if let Err(err) = version {
+                let pv = get_parent_version(game_version);
+                cprintln!("failed to get exact version: {err}, trying to get {pv}");
+                version = get_latest_version_from_slug(&slug, loaders, pv)
+                    .await
+                    .map_err(|err| format!("{slug}: {err}"));
+            }
+            let version = version?;
+
             let version_file = version.get_primary_file();
             download_version_file(version_file, current_dir)
                 .await
