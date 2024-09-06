@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.28](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.27..0.1.0-alpha.28) - 2024-09-06
+
+### <!-- 0 -->🎈 Features
+
+
+- Allow fetching using parent version - ([8bcad17](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/8bcad17ccb7e2b7842ffc38906f03da1373b548e))
+
 ## [0.1.0-alpha.27](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.26..0.1.0-alpha.27) - 2024-09-04
 
 ### <!-- 0 -->🎈 Features
