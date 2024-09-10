@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.29](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.28..0.1.0-alpha.29) - 2024-09-10
+
+### <!-- 2 --> Refactor
+
+
+- Rewrite modrinth commands with better ui - ([639ddcb](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/639ddcb9f9cd1ed2ace56a0adf40b4086f146a05))
+
 ## [0.1.0-alpha.28](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.27..0.1.0-alpha.28) - 2024-09-06
 
 ### <!-- 0 -->🎈 Features
