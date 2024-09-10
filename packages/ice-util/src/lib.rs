@@ -1,8 +1,8 @@
 pub mod fs;
+pub mod minecraft;
 pub mod path;
 pub mod regex;
 pub mod time;
-pub mod minecraft;
 
 use std::path::Path;
 
@@ -23,7 +23,7 @@ pub fn download_from_url_blocking<S: AsRef<str>, P: AsRef<Path>>(
     url: S,
     path: P,
     on_progress: impl Fn((u64, u64)),
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), anyhow::Error> {
     tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
@@ -36,7 +36,7 @@ pub async fn download_from_url<S: AsRef<str>, P: AsRef<Path>>(
     url: S,
     path: P,
     on_progress: impl Fn((u64, u64)),
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), anyhow::Error> {
     let url = url.as_ref();
     let path = path.as_ref();
 

@@ -2,7 +2,7 @@ mod modrinth;
 mod server;
 
 use clap::{Parser, Subcommand};
-use ice::config::ModConfig;
+use ice::config::LocalModsConfig;
 use ice_core::Loader;
 use std::{env, path::Path};
 use tracing::info;
@@ -52,17 +52,17 @@ impl ModCommands {
         }
 
         info!("loading mods.toml...");
-        let mut config = ModConfig::load(config_path).unwrap();
+        let mut config = LocalModsConfig::load(config_path).unwrap();
 
         match self {
             ModCommands::Sync => {
                 modrinth::sync(current_dir, &config);
             }
             ModCommands::Update => {
-                modrinth::update(current_dir, &mut config, config_path);
+                modrinth::update(current_dir, &mut config);
             }
             ModCommands::Add { slugs } => {
-                modrinth::add(slugs, current_dir, &mut config, config_path);
+                modrinth::add(slugs, current_dir, &mut config);
             }
             _ => (),
         }

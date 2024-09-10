@@ -8,8 +8,8 @@ use rhai::{
 use rhai_fs::FilesystemPackage;
 use tracing::error;
 
-mod regex;
 pub mod minecraft_rtext;
+mod regex;
 
 pub fn engine_with_lib() -> Engine {
     let mut engine = Engine::new();

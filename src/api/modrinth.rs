@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Display, fs, path::Path, vec};
+use std::{fmt::Display, fs, path::Path, vec};
 
 use color_print::{cprint, cprintln};
 use ice_core::Loader;
@@ -16,16 +16,14 @@ pub async fn download_latest_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
     loader: Loader,
     game_version: V,
     dir: P,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), anyhow::Error> {
     let loaders = if let Loader::Quilt = loader {
         vec![Loader::Quilt, Loader::Fabric]
     } else {
         vec![loader]
     };
     let version = get_latest_version_from_slug(slug, loaders, game_version).await?;
-    download_version_file(version.get_primary_file(), dir)
-        .await
-        .map_err(|err| format!("failed to download: {err}"))?;
+    download_version_file(version.get_primary_file(), dir).await?;
     Ok(())
 }
 
@@ -38,7 +36,7 @@ pub async fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
     loader: Loader,
     game_version: S,
     dir: P,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), anyhow::Error> {
     let slug = slug.as_ref();
     let version_number = version_number.as_ref();
     let game_version = game_version.as_ref();
@@ -60,16 +58,14 @@ pub async fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
             let version_file = version.get_primary_file();
 
             if dir.join(&version_file.filename).exists() {
-                return Err("already exists".into());
+                anyhow::bail!("already exists");
             } else {
                 println!();
-                download_version_file(version_file, dir)
-                    .await
-                    .map_err(|err| format!("failed to download: {err}"))?;
+                download_version_file(version_file, dir).await?;
             }
         }
         None => {
-            return Err("version not found".into());
+            anyhow::bail!("version not found");
         }
     }
     Ok(())
@@ -83,7 +79,7 @@ pub async fn add_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
     loader: Loader,
     game_version: V,
     dir: P,
-) -> Result<(String, String), Box<dyn Error>> {
+) -> Result<(String, String), anyhow::Error> {
     let slug = slug.as_ref();
     let dir = dir.as_ref();
 
@@ -93,9 +89,7 @@ pub async fn add_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
         vec![loader]
     };
     let version = get_latest_version_from_slug(slug, loaders, game_version).await?;
-    download_version_file(version.get_primary_file(), dir)
-        .await
-        .map_err(|err| format!("failed to download: {err}"))?;
+    download_version_file(version.get_primary_file(), dir).await?;
     Ok((slug.to_string(), version.version_number))
 }
 
@@ -106,11 +100,11 @@ pub async fn update_mod<P: AsRef<Path>, S: AsRef<str>>(
     path: P,
     loader: Loader,
     game_version: S,
-) -> Result<(String, String), Box<dyn Error>> {
+) -> Result<(String, String), anyhow::Error> {
     let path = path.as_ref();
     let dir = path.parent().unwrap();
 
-    let hash = get_sha1_hash(path).map_err(|err| format!("failed to get hash: {err}"))?;
+    let hash = get_sha1_hash(path)?;
     let loaders = if let Loader::Quilt = loader {
         vec![Loader::Quilt, Loader::Fabric]
     } else {
@@ -135,14 +129,14 @@ pub async fn update_mod<P: AsRef<Path>, S: AsRef<str>>(
             cprintln!("<r>error</>: {err}");
         }
         // cprintln!("removing old version...");
-        fs::remove_file(path).map_err(|err| format!("failed to remove old version: {err}"))?;
+        fs::remove_file(path)?;
     }
     Ok((project.slug, new_version.version_number))
 }
 
 const HOST: &str = "https://api.modrinth.com/v2";
 
-pub async fn get_project<S: AsRef<str>>(id_or_slug: S) -> Result<Project, Box<dyn Error>> {
+pub async fn get_project<S: AsRef<str>>(id_or_slug: S) -> Result<Project, anyhow::Error> {
     let id_or_slug = id_or_slug.as_ref();
 
     let res = reqwest::get(format!("{HOST}/project/{id_or_slug}")).await?;
@@ -154,7 +148,7 @@ pub async fn get_project_versions<S: AsRef<str>>(
     id_or_slug: S,
     loaders: Option<&Vec<Loader>>,
     game_version: Option<String>,
-) -> Result<Vec<Version>, Box<dyn Error>> {
+) -> Result<Vec<Version>, anyhow::Error> {
     let slug = id_or_slug.as_ref();
     let url = format!("{HOST}/project/{slug}/version");
     let mut params = vec![];
@@ -174,24 +168,23 @@ pub async fn get_project_versions<S: AsRef<str>>(
             ),
         ))
     }
-    let url = reqwest::Url::parse_with_params(&url, params)
-        .map_err(|err| format!("failed to parse url: {err}"))?;
+    let url = reqwest::Url::parse_with_params(&url, params)?;
 
     let res = reqwest::get(url).await?;
     let versions = res.json::<Vec<Version>>().await?;
     Ok(versions)
 }
 
+// Get `Version` from the hash of the file
 pub async fn get_version_from_hash<H: AsRef<str>>(
     hash: H,
     hash_method: HashMethod,
-) -> Result<Version, Box<dyn Error>> {
+) -> Result<Version, anyhow::Error> {
     let hash = hash.as_ref();
     let url = format!("{HOST}/version_file/{hash}");
 
     let params = [("algorithm", hash_method.to_string())];
-    let url = reqwest::Url::parse_with_params(&url, params)
-        .map_err(|err| format!("failed to parse url: {err}"))?;
+    let url = reqwest::Url::parse_with_params(&url, params)?;
     let res = reqwest::get(url).await?;
     let version = res.json::<Version>().await?;
     Ok(version)
@@ -206,14 +199,13 @@ pub async fn get_latest_version_from_hash<H: AsRef<str>, V: AsRef<str>>(
     hash_method: HashMethod,
     loaders: &Vec<Loader>,
     game_version: V,
-) -> Result<Version, Box<dyn Error>> {
+) -> Result<Version, anyhow::Error> {
     let hash = hash.as_ref();
     let game_version = game_version.as_ref();
 
     let url = format!("{HOST}/version_file/{hash}/update");
     let params = [("algorithm", hash_method.to_string())];
-    let url = reqwest::Url::parse_with_params(&url, params)
-        .map_err(|err| format!("failed to parse url: {err}"))?;
+    let url = reqwest::Url::parse_with_params(&url, params)?;
 
     let client = reqwest::Client::new();
     let res = client
@@ -236,7 +228,7 @@ pub async fn get_latest_version_from_slug<S: AsRef<str>, V: AsRef<str>>(
     slug: S,
     loaders: Vec<Loader>,
     game_version: V,
-) -> Result<Version, Box<dyn Error>> {
+) -> Result<Version, anyhow::Error> {
     let slug = slug.as_ref();
     let game_version = game_version.as_ref();
 
@@ -247,10 +239,9 @@ pub async fn get_latest_version_from_slug<S: AsRef<str>, V: AsRef<str>>(
             v.game_versions.contains(&game_version.to_string())
                 && (loaders.iter().any(|l| v.loaders.contains(l)))
         })
-        .ok_or(
-            format!("cannot find a version of {slug} satisfied {loaders:?} and {game_version}")
-                .into(),
-        )
+        .ok_or(anyhow::anyhow!(
+            "cannot find a version of {slug} satisfied {loaders:?} and {game_version}"
+        ))
 }
 
 #[derive(Debug, Serialize)]
@@ -270,7 +261,7 @@ impl Display for HashMethod {
 }
 
 pub mod utils {
-    use std::{error::Error, path::Path};
+    use std::path::Path;
 
     use ice_util::download_from_url;
 
@@ -279,7 +270,7 @@ pub mod utils {
     pub async fn download_version_file<P: AsRef<Path>>(
         version_file: &VersionFile,
         dir: P,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), anyhow::Error> {
         let dir = dir.as_ref();
         let path = dir.join(&version_file.filename);
         if path.exists() {

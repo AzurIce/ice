@@ -92,7 +92,6 @@ impl Server {
         }
     }
 
-
     pub fn tellraw<T: Into<Component>>(&mut self, target: String, component: T) {
         let component = component.into();
         println!("tellraw {target} {}", build_component(component.clone()));
