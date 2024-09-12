@@ -184,6 +184,16 @@ Ice 基于 [rhaiscript/rhai: Rhai - An embedded scripting language for Rust. (gi
 - `regex`：[ice/packages/ice-server/src/plugin/rhai_plugin/regex.rs at main · AzurIce/ice (github.com)](https://github.com/AzurIce/ice/blob/main/packages/ice-server/src/plugin/rhai_plugin/regex.rs)
 - 全局的 Minecraft 格式化文本相关：[ice/packages/ice-server/src/plugin/rhai_plugin/minecraft_rtext.rs at main · AzurIce/ice (github.com)](https://github.com/AzurIce/ice/blob/main/packages/ice-server/src/plugin/rhai_plugin/minecraft_rtext.rs)
 
+#### 插件配置
+
+可以在 `Ice.toml` 的 `[plugins]` 下提供每个插件的设置，例：
+
+```toml
+[plugins]
+[plugins.scoreboard]
+interval = 10
+```
+
 #### 内置插件
 
 Ice 提供了一些内置插件，会在运行时自动复制到 `plugins` 目录
@@ -193,6 +203,14 @@ Ice 提供了一些内置插件，会在运行时自动复制到 `plugins` 目�
     源码：[ice/packages/ice-server/plugins/here.rhai at main · AzurIce/ice (github.com)](https://github.com/AzurIce/ice/blob/main/packages/ice-server/plugins/here.rhai)
 
     参考自 [TISUnion/Here: A MCDeamon plugin for broadcasting location. (github.com)](https://github.com/TISUnion/Here)
+
+- `scoreboard`：计分板轮换
+
+    设置：
+
+    - `interval`：轮换间隔（秒）
+
+    
 
 ---
 
