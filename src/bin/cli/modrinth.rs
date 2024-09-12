@@ -417,6 +417,8 @@ async fn update_mod(
         span.pb_set_message("downloading...");
         let version_file = version.get_primary_file();
         download_version_file(version_file, current_dir).await?;
+        span.pb_set_message("removing old file...");
+        remove_file(path)?;
         Ok(UpdateRes::Updated(project.slug, version.version_number))
     }
     .instrument(span)
