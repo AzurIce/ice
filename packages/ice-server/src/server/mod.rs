@@ -1,10 +1,14 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use ice_util::minecraft::rtext::{build_component, Component};
 use minecraft_server::MinecraftServer;
+use rhai::Dynamic;
 use tracing::{error, info};
 
-use crate::{config::Config, Event};
+use crate::{config::{Config, PluginConfig}, Event};
 
 pub mod minecraft_server;
 pub mod regex;
@@ -58,6 +62,12 @@ impl Server {
                 fn_name,
             })
             .unwrap();
+    }
+
+    /// Get the config of a plugin
+    pub fn get_plugin_config(&self, plugin_id: String) -> Option<&PluginConfig> {
+        println!("get_plugin_config");
+        self.config.plugins.get(&plugin_id)
     }
 
     /// Stop the server (write `stop` to the stdin of the server)

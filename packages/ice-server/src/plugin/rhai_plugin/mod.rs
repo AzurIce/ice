@@ -1,10 +1,12 @@
 #![warn(missing_docs)]
-use std::{path::PathBuf, time::Instant};
+use std::path::PathBuf;
 
 use ice_util::minecraft::rtext::{Component, ComponentObject};
 use minecraft_rtext::MinecraftRtextPackage;
 use rhai::{
-    packages::Package, CustomType, Engine, EvalAltResult, FuncArgs, Scope, TypeBuilder, AST,
+    packages::Package,
+    serde::{from_dynamic, to_dynamic},
+    CallFnOptions, CustomType, Engine, EvalAltResult, FuncArgs, Scope, TypeBuilder, AST,
 };
 use rhai_fs::FilesystemPackage;
 use tracing::error;
@@ -26,9 +28,9 @@ pub(crate) fn engine_with_lib() -> Engine {
 
 use super::Plugin;
 
+/// An Ice plugin that is written in rhai
 pub struct RhaiPlugin {
     id: String,
-    server: Server,
     engine: Engine,
     scope: Scope<'static>,
     ast: AST,
@@ -50,28 +52,42 @@ impl RhaiPlugin {
         // println!("engine initializing cost: {:?}", t.elapsed());
 
         // let t = Instant::now();
+        // ? Compile the plugin
         let ast = engine.compile_file(path).unwrap();
         // println!("ast compile cost: {:?}", t.elapsed());
 
         // let t = Instant::now();
         let mut scope = Scope::new();
-        engine.eval_ast_with_scope::<()>(&mut scope, &ast).unwrap();
+        // ? get id()
         let id = engine
-            .call_fn::<String>(&mut scope, &ast, "id", ())
+            .call_fn_with_options::<String>(
+                CallFnOptions::new().eval_ast(false),
+                &mut scope,
+                &ast,
+                "id",
+                (),
+            )
             .unwrap();
         // println!("first eval and id cost: {:?}", t.elapsed());
 
         // let t = Instant::now();
-        // engine.register_global_module(exported_module!(server_api).into());
-        // println!("register module cost: {:?}", t.elapsed());
-
-        // let t = Instant::now();
+        // ? Register apis
         engine.build_type::<Server>();
+        let _server = server.clone();
+        engine.register_fn("server", move || _server.clone());
+        let _server = server.clone();
+        let _id = id.clone();
+        engine.register_fn("config", move || {
+            let server = _server.clone();
+            server.clone().get_plugin_config(_id.clone())
+        });
         // println!("register type and fn cost: {:?}", t.elapsed());
+
+        //? Initialize global variables
+        engine.eval_ast_with_scope::<()>(&mut scope, &ast).unwrap();
 
         Self {
             id,
-            server,
             engine,
             scope,
             ast,
@@ -82,9 +98,13 @@ impl RhaiPlugin {
     pub fn call_fn(&mut self, fn_name: impl AsRef<str>, args: impl FuncArgs) {
         let fn_name = fn_name.as_ref();
 
-        let res = self
-            .engine
-            .call_fn::<()>(&mut self.scope, &self.ast, &fn_name, args);
+        let res = self.engine.call_fn_with_options::<()>(
+            CallFnOptions::new().eval_ast(false),
+            &mut self.scope,
+            &self.ast,
+            &fn_name,
+            args,
+        );
         if let Err(err) = res {
             if let EvalAltResult::ErrorFunctionNotFound(name, _) = err.as_ref() {
                 if name != fn_name {
@@ -103,19 +123,23 @@ impl Plugin for RhaiPlugin {
     }
 
     fn on_load(&mut self) {
-        self.call_fn("on_load", (self.server.clone(),));
+        self.call_fn("on_load", ());
     }
 
     fn on_server_log(&mut self, content: String) {
-        self.call_fn("on_server_log", (self.server.clone(), content));
+        self.call_fn("on_server_log", (content,));
     }
 
     fn on_server_done(&mut self) {
-        self.call_fn("on_server_done", (self.server.clone(),));
+        self.call_fn("on_server_done", ());
     }
 
     fn on_player_message(&mut self, player: String, msg: String) {
-        self.call_fn("on_player_message", (self.server.clone(), player, msg));
+        self.call_fn("on_player_message", (player, msg));
+    }
+
+    fn on_call_fn(&mut self, fn_name: String) {
+        self.call_fn(fn_name, ());
     }
 }
 
@@ -126,6 +150,17 @@ struct Server {
 }
 
 impl Server {
+    pub fn get_plugin_config(&mut self, id: String) -> rhai::Map {
+        let config = self
+            .inner
+            .get_plugin_config(id)
+            .cloned()
+            .unwrap_or_default();
+        let config = to_dynamic(config).unwrap();
+        let config = from_dynamic(&config).unwrap();
+        config
+    }
+
     pub fn running(&mut self) -> bool {
         self.inner.running()
     }

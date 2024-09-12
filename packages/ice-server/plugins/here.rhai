@@ -2,14 +2,15 @@ fn id() {
     "here"
 }
 
+let server = server();
 let here_user = 0;
 
-fn request_player_position(server, player) {
+fn request_player_position(player) {
     server.writeln(`data get entity ${player}`);
 }
 
 // https://github.com/TISUnion/Here/blob/master/here/entry.py#L44
-fn display(server, player, dimension, position) {
+fn display(player, dimension, position) {
     let dimension_color = if dimension == "minecraft:overworld" {
         Color::DarkGreen
     } else if dimension == "minecraft:the_nether" {
@@ -37,23 +38,26 @@ fn display(server, player, dimension, position) {
     server.writeln(`effect give ${player} minecraft:glowing ${time} 0 true`);
 }
 
-fn on_player_message(server, player, msg) {
+fn on_player_message(player, msg) {
     if msg == "#here" {
         here_user += 1;
         request_player_position(server, player);
     }
 }
 
-fn on_server_log(server, content) {
-    if here_user > 0 && regex::regex_match(content, "\\w+ has the following entity data: ") {
-        let name = regex::regex_captures(content, "(\\w+) has the following entity data: ")[1];
+const REGEX_DATA = "\\w+ has the following entity data: ";
+const REGEX_DIMENSION = "Dimension: (.*?),";
+const REGEX_POSITION = "Pos: \\[(.*?)d, (.*?)d, (.*?)d]";
+fn on_server_log(content) {
+    if here_user > 0 && regex::regex_match(content, REGEX) {
+        let name = regex::regex_captures(content, REGEX)[1];
 
-        let dimension = regex::regex_captures(content, "Dimension: (.*?),")[1];
+        let dimension = regex::regex_captures(content, REGEX_DIMENSION)[1];
         dimension.replace("\"", "");
         dimension.replace("'", "");
         dimension.replace(",", "");
 
-        let position = regex::regex_captures(content, "Pos: \\[(.*?)d, (.*?)d, (.*?)d]");
+        let position = regex::regex_captures(content, REGEX_POSITION);
         position = position.extract(1..=3).map(|s| parse_float(s));
 
         display(server, name, dimension, position);

@@ -13,7 +13,6 @@ use command::{bkarch::BkArch, bksnap::BkSnap, Command};
 
 use plugin::{scoreboard::ScoreBoard, Plugin, RhaiPlugin};
 use server::Server;
-use std::any::Any;
 use tracing::info;
 
 pub mod command;
@@ -27,8 +26,11 @@ macro_rules! include_plugin {
     };
 }
 
-const BUILTIN_PLUGINS: &[(&[u8], &str)] =
-    &[include_plugin!("here.rhai"), include_plugin!("rtext.rhai")];
+const BUILTIN_PLUGINS: &[(&[u8], &str)] = &[
+    include_plugin!("here.rhai"),
+    include_plugin!("rtext.rhai"),
+    include_plugin!("scoreboard.rhai"),
+];
 
 #[derive(Debug, Clone)]
 pub enum Event {
@@ -41,6 +43,10 @@ pub enum Event {
     },
     PluginDelayCall {
         delay_ms: u64,
+        plugin_id: String,
+        fn_name: String,
+    },
+    PluginCallFn {
         plugin_id: String,
         fn_name: String,
     },
@@ -128,8 +134,10 @@ impl Core {
             plugin.on_load();
         }
 
-        let mut plugins: Vec<Box<dyn Plugin>> =
-            vec![Box::new(ScoreBoard::init(server.clone()).await)];
+        let mut plugins = vec![];
+        // let rust_plugins: Vec<Box<dyn Plugin>> =
+        //     vec![Box::new(ScoreBoard::init(server.clone()).await)];
+        // plugins.extend(rust_plugins);
         plugins.extend(
             rhai_plugins
                 .into_iter()
@@ -157,6 +165,7 @@ impl Core {
         });
 
         // Thread to handle server events
+        let _event_tx = event_tx.clone();
         let _command_tx = command_tx.clone();
         let mut _server = server.clone();
         tokio::spawn(async move {
@@ -171,19 +180,13 @@ impl Core {
                             "delay call {} {} {}, waiting...",
                             delay_ms, plugin_id, fn_name
                         );
-                        let _plugins = plugins.clone();
-                        let _server = _server.clone();
+                        let _event_tx = _event_tx.clone();
                         tokio::spawn(async move {
                             tokio::time::sleep(Duration::from_millis(delay_ms)).await;
                             info!("delay call {} {} {}", delay_ms, plugin_id, fn_name);
-                            let mut plugins = _plugins.lock().unwrap();
-                            if let Some(plugin) = plugins
-                                .iter_mut()
-                                .find(|p| p.id() == plugin_id)
-                                .and_then(|p| (p as &mut dyn Any).downcast_mut::<RhaiPlugin>())
-                            {
-                                plugin.call_fn(fn_name, (_server,))
-                            }
+                            _event_tx
+                                .send(Event::PluginCallFn { plugin_id, fn_name })
+                                .unwrap();
                         });
                     }
                     Event::ServerDown => {
@@ -202,6 +205,7 @@ impl Core {
                     Event::ServerDone => {
                         info!("server done");
                     }
+                    _ => (),
                 }
 
                 for plugin in plugins.lock().unwrap().iter_mut() {
