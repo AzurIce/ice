@@ -296,12 +296,13 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &LocalModsConfig) {
 
     // Then, download mods not existed
     info!("downloading other mods...");
-    let mut stream = stream::iter(
-        config
-            .get_mods()
-            .into_iter()
-            .filter(|value| matches!(value, Mod::Modrinth(_))),
-    )
+    let mut stream = stream::iter(config.get_mods().into_iter().filter(|value| {
+        if let Mod::Modrinth(modrinth_mod) = value {
+            !synced_mods.contains(&modrinth_mod.slug)
+        } else {
+            false
+        }
+    }))
     .map(|modrinth_mod| async {
         match modrinth_mod {
             Mod::Modrinth(modrinth_mod) => {
