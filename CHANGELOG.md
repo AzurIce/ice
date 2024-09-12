@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.30](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.29..0.1.0-alpha.30) - 2024-09-12
+
+### <!-- 2 --> Refactor
+
+
+- Rewrite plugin delay call, adjust plugin APIs, rewrite scoreboard plugin in Rhai, support plugin config - ([bd56268](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/bd56268609299a07cae0cd1767d1d847d36d6881))
+
+### <!-- 3 -->📚 Documentation
+
+
+- Improved some document, updated README - ([9fbb222](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/9fbb2220c7edb69ea803ea393b30126b9d08c0ef))
+
 ## [0.1.0-alpha.29](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.28..0.1.0-alpha.29) - 2024-09-10
 
 ### <!-- 2 --> Refactor
