@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha-31](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.30..0.1.0-alpha-31) - 2024-09-12
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Ice modrinth update does not remove old file - ([782279c](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/782279c0d7c8fac994e6b7815d32a1f12a1dfa52))
+
 ## [0.1.0-alpha.30](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.29..0.1.0-alpha.30) - 2024-09-12
 
 ### <!-- 2 --> Refactor
