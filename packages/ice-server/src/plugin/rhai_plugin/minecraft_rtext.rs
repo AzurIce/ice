@@ -1,3 +1,4 @@
+//! Minecraft rtext module for rhai
 use ice_util::minecraft::rtext::{self, ComponentObject};
 use rhai::{def_package, plugin::*, Array};
 

@@ -29,6 +29,7 @@ impl Server {
         self.minecraft_server.lock().unwrap().is_some()
     }
 
+    /// Start the server
     pub fn start(&self) -> Result<(), String> {
         info!("[server]: start");
         let mut server = self.minecraft_server.lock().unwrap();
@@ -44,6 +45,7 @@ impl Server {
         }
     }
 
+    /// Call a function in the plugin after a delay
     pub fn delay_call(&self, delay_ms: i64, plugin_id: String, fn_name: String) {
         info!(
             "[server]: delay_call {} {} {}",
@@ -58,6 +60,7 @@ impl Server {
             .unwrap();
     }
 
+    /// Stop the server (write `stop` to the stdin of the server)
     pub fn stop(&self) -> Result<(), String> {
         if let Some(server) = self.minecraft_server.lock().unwrap().as_mut() {
             server.writeln("stop");
@@ -77,6 +80,7 @@ impl Server {
         }
     }
 
+    /// Write a line to the stdin of the server
     pub fn writeln(&self, line: &str) {
         let mut server = self.minecraft_server.lock().unwrap();
         if let Some(server) = server.as_mut() {
@@ -84,6 +88,7 @@ impl Server {
         }
     }
 
+    /// Say contents (write `say <content>` to the stdin of the server)
     pub fn say<S: AsRef<str>>(&self, content: S) {
         let content = content.as_ref();
         println!("say {content}");
@@ -92,6 +97,7 @@ impl Server {
         }
     }
 
+    /// Tellraw to a target (write `tellraw <target> <component>` to the stdin of the server)
     pub fn tellraw<T: Into<Component>>(&mut self, target: String, component: T) {
         let component = component.into();
         println!("tellraw {target} {}", build_component(component.clone()));

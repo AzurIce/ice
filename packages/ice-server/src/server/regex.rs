@@ -8,13 +8,13 @@ use regex::Regex;
 [17:19:12] [Server thread/INFO]: App sleep_ignore_fake_players loaded in 51 ms
 [17:19:12] [Server thread/INFO]: Done (7.109s)! For help, type "help"
 */
-const DONE: &str = r"]: Done \(\d+.\d+s\)!";
+pub const DONE: &str = r"]: Done \(\d+.\d+s\)!";
 pub fn done_regex() -> &'static Regex {
     static DONE_REGEX: OnceLock<Regex> = OnceLock::new();
     DONE_REGEX.get_or_init(|| Regex::new(DONE).unwrap())
 }
 
-const FORWARD: &str = r"^(.+) *\| *(\S+?)\n";
+pub const FORWARD: &str = r"^(.+) *\| *(\S+?)\n";
 pub fn forward_regex() -> &'static Regex {
     static FORWARD_REGEX: OnceLock<Regex> = OnceLock::new();
     FORWARD_REGEX.get_or_init(|| Regex::new(FORWARD).expect("regex err"))
@@ -30,7 +30,7 @@ pub fn forward_regex() -> &'static Regex {
 /*
 [19:23:48] [Server thread/INFO]: [Not Secure] <_AzurIce_> #bksnap make
  */
-const PLAYER: &str = r"]: (?:\[Not Secure] )?<(.*?)> (.*)";
+pub const PLAYER: &str = r"]: (?:\[Not Secure] )?<(.*?)> (.*)";
 pub fn player_regex() -> &'static Regex {
     static PLAYER_REGEX: OnceLock<Regex> = OnceLock::new();
     PLAYER_REGEX.get_or_init(|| Regex::new(PLAYER).expect("regex err"))

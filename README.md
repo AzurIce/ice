@@ -34,7 +34,7 @@ scoop update ice
 cargo install --git https://github.com/AzurIce/ice.git --locked
 ```
 
-## 使用方式
+## 使用
 
 ```
 Usage: ice.exe <COMMAND>
@@ -49,9 +49,13 @@ Options:
   -V, --version  Print version
 ```
 
-### mod
+可以通过 `命令 --help` 查看对应命令的帮助。
+
+## Modrinth
 
 ```
+Modrinth related commands
+
 Usage: ice.exe modrinth <COMMAND>
 
 Commands:
@@ -65,7 +69,7 @@ Options:
   -h, --help  Print help
 ```
 
-`ice modrinth` 命令可以使用当前目录的 `mods.toml` 来管理当前目录的 mod，目前所有的 mod 均通过 Modrinth API 获取。
+Ice 的 `modrinth` 命令提供了基于当前目录下 `mods.toml` 对当前文件夹的 mod 的管理功能，目前所有的 mod 及相关信息均通过 Modrinth API 获取。
 
 可用的命令如下：
 
@@ -106,12 +110,19 @@ Options:
 - `ice modrinth update`：下载当前目录所有 mod 符合 `version` 和 `loader` 的最新版本，删除老版本，并更新到 `mods.toml` 中。
 - `ice modrinth add <slug>`: 下载符合 `version` 和 `loader` 的最新版本 mod，并更新到 `mods.toml` 中
 
-### server
+## Server
+
+### 命令
+
+Ice 的 Server 命令用于安装、启动、管理服务端。
 
 ```
+Server related commands
+
 Usage: ice.exe server <COMMAND>
 
 Commands:
+  mod      mod command for servers Ice.toml
   new
   init
   install
@@ -148,9 +159,40 @@ Options:
 
 - `run`：使用 ice 内核启动服务器
 
-## Ice 内核
+### 备份功能
 
-就是以前的 MCSH / ACH。
+存储在 `backups` 目录下的 `archives` / `snapshots` 文件夹中：
+
+- `#bksnap make` / `#bksnap load <id>`：创建/加载 快照备份
+- `#bkarch make <name>` / `#bkarch load <id>`：创建/加载 归档备份
+
+### ​插件
+
+> [!caution]
+>
+> Ice 的插件系统目前还处于 WIP 阶段，所以相关 API 可能频繁变更，且缺乏文档，因此需要使用者有一定的 Rust 和 Rhai 的相关知识。
+
+Ice 基于 [rhaiscript/rhai: Rhai - An embedded scripting language for Rust. (github.com)](https://github.com/rhaiscript/rhai) 提供了一套插件系统，可以通过编写 Rhai 脚本来扩展 Ice Server 的功能。所有的插件均放置在 `plugins` 目录下。
+
+#### API
+
+- `Server` 结构：[ice/packages/ice-server/src/plugin/rhai_plugin/mod.rs at main · AzurIce/ice (github.com)](https://github.com/AzurIce/ice/blob/main/packages/ice-server/src/plugin/rhai_plugin/mod.rs#L122)
+- 钩子函数：[ice/packages/ice-server/src/plugin/rhai_plugin/mod.rs at main · AzurIce/ice (github.com)](https://github.com/AzurIce/ice/blob/main/packages/ice-server/src/plugin/rhai_plugin/mod.rs#L98)
+
+#### 一些内置的模块
+
+- `regex`：[ice/packages/ice-server/src/plugin/rhai_plugin/regex.rs at main · AzurIce/ice (github.com)](https://github.com/AzurIce/ice/blob/main/packages/ice-server/src/plugin/rhai_plugin/regex.rs)
+- 全局的 Minecraft 格式化文本相关：[ice/packages/ice-server/src/plugin/rhai_plugin/minecraft_rtext.rs at main · AzurIce/ice (github.com)](https://github.com/AzurIce/ice/blob/main/packages/ice-server/src/plugin/rhai_plugin/minecraft_rtext.rs)
+
+#### 内置插件
+
+Ice 提供了一些内置插件，会在运行时自动复制到 `plugins` 目录
+
+- `here`：添加 `#here` 命令以高亮并在聊天来显示玩家自身位置
+
+    源码：[ice/packages/ice-server/plugins/here.rhai at main · AzurIce/ice (github.com)](https://github.com/AzurIce/ice/blob/main/packages/ice-server/plugins/here.rhai)
+
+    参考自 [TISUnion/Here: A MCDeamon plugin for broadcasting location. (github.com)](https://github.com/TISUnion/Here)
 
 ---
 

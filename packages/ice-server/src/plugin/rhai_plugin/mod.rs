@@ -1,3 +1,4 @@
+#![warn(missing_docs)]
 use std::{path::PathBuf, time::Instant};
 
 use ice_util::minecraft::rtext::{Component, ComponentObject};
@@ -11,7 +12,7 @@ use tracing::error;
 pub mod minecraft_rtext;
 mod regex;
 
-pub fn engine_with_lib() -> Engine {
+pub(crate) fn engine_with_lib() -> Engine {
     let mut engine = Engine::new();
 
     let pkg = MinecraftRtextPackage::new();
@@ -40,6 +41,7 @@ impl RhaiPlugin {
         first eval and id cost: 457.25µs
         register type and fn cost: 236.625µs
     */
+    /// Create a [`RhaiPlugin`] for a specific [`Server`] from a `.rhai` file
     pub fn from_file(server: crate::server::Server, path: PathBuf) -> Self {
         let server = Server { inner: server };
 
