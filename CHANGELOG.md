@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.34](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.33..0.1.0-alpha.34) - 2024-09-13
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Plugin here Function not found: request_player_position - ([a44b74e](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/a44b74ede52a60bb5c65680bfc53679856dd88e9))
+- Here display server argument - ([e986869](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/e986869ef6d9467d13d65af431365057aa95ee79))
+
 ## [0.1.0-alpha.33](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.32..0.1.0-alpha.33) - 2024-09-13
 
 ### <!-- 0 -->🎈 Features
