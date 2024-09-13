@@ -1,6 +1,6 @@
 [package]
 name = "ice"
-version = "0.1.0-alpha.32"
+version = "0.1.0-alpha.33"
 edition = "2021"
 
 [dependencies]

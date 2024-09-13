@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.33](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.32..0.1.0-alpha.33) - 2024-09-13
+
+### <!-- 0 -->🎈 Features
+
+
+- Properties - ([dbf32a0](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/dbf32a09ee9ddfeb2876e8fcefb3106b32bdb6ee))
+
 ## [0.1.0-alpha.32](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.31..0.1.0-alpha.32) - 2024-09-13
 
 ### <!-- 0 -->🎈 Features
