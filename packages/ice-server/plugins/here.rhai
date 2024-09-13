@@ -41,7 +41,7 @@ fn display(player, dimension, position) {
 fn on_player_message(player, msg) {
     if msg == "#here" {
         here_user += 1;
-        request_player_position(server, player);
+        request_player_position(player);
     }
 }
 
