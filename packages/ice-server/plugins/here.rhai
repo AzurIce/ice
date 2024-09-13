@@ -45,7 +45,7 @@ fn on_player_message(player, msg) {
     }
 }
 
-const REGEX_DATA = "\\w+ has the following entity data: ";
+const REGEX = "(\\w+) has the following entity data: ";
 const REGEX_DIMENSION = "Dimension: (.*?),";
 const REGEX_POSITION = "Pos: \\[(.*?)d, (.*?)d, (.*?)d]";
 fn on_server_log(content) {
