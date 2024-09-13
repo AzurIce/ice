@@ -1,13 +1,8 @@
-use std::{
-    collections::HashMap,
-    ops::Deref,
-    sync::{Arc, Mutex, MutexGuard},
-};
+use std::sync::{Arc, Mutex};
 
 use ::regex::Regex;
 use ice_util::minecraft::rtext::{build_component, Component};
 use minecraft_server::MinecraftServer;
-use rhai::Dynamic;
 use tracing::{error, info};
 
 use crate::{
@@ -72,10 +67,6 @@ impl Server {
 
     /// Call a function in the plugin after a delay
     pub fn delay_call(&self, delay_ms: i64, plugin_id: String, fn_name: String) {
-        // info!(
-        //     "[server]: delay_call {} {} {}",
-        //     delay_ms, plugin_id, fn_name
-        // );
         self.event_tx
             .send(Event::PluginDelayCall {
                 delay_ms: delay_ms as u64,

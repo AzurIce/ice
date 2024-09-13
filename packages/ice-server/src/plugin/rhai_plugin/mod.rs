@@ -1,4 +1,8 @@
 #![warn(missing_docs)]
+//! Rhai plugin
+//!
+//! This module contains the implementation of the Rhai plugin
+//! and the related types and functions.
 use std::path::PathBuf;
 
 use ice_util::minecraft::rtext::{Component, ComponentObject};

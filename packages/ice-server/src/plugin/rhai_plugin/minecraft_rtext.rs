@@ -70,6 +70,7 @@ mod module {
 }
 
 def_package! {
+/// Minecraft rtext package
     pub MinecraftRtextPackage(module) {
         combine_with_exported_module!(module, "minecraft_rtext", module);
     } |> |engine| {
