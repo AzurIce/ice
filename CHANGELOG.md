@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.32](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.31..0.1.0-alpha.32) - 2024-09-13
+
+### <!-- 0 -->🎈 Features
+
+
+- Log filter - ([8051a74](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/8051a741f79d7aa25ec98c342d68f4cbdc894ae2))
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Here plugin - ([2dce8b6](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/2dce8b63f2e091d1f9c54ac551d25b8d96ac1ab6))
+
 ## [0.1.0-alpha.31](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.30..0.1.0-alpha.31) - 2024-09-12
 
 ### <!-- 1 -->🕷️ Bug Fixes
