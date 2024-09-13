@@ -12,6 +12,13 @@ let server = server();
 let objectives = [];
 let cur = 0;
 
+const REGEX_OBJECTIVE_SET = "]: Set display slot sidebar to show objective";
+const REGEX_OBJECTIVES_SET_UNCHANGED = "]: Nothing changed. That display slot is already showing that objective";
+fn on_load() {
+    server.add_log_filter(REGEX_OBJECTIVE_SET);
+    server.add_log_filter(REGEX_OBJECTIVES_SET_UNCHANGED);
+}
+
 fn on_server_done() {
     server.writeln("scoreboard objectives list");
     server.delay_call(config.interval * 1000, "scoreboard", "change_objective");

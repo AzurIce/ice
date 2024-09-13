@@ -176,14 +176,14 @@ impl Core {
                         plugin_id,
                         fn_name,
                     } => {
-                        info!(
-                            "delay call {} {} {}, waiting...",
-                            delay_ms, plugin_id, fn_name
-                        );
+                        // info!(
+                        //     "delay call {} {} {}, waiting...",
+                        //     delay_ms, plugin_id, fn_name
+                        // );
                         let _event_tx = _event_tx.clone();
                         tokio::spawn(async move {
                             tokio::time::sleep(Duration::from_millis(delay_ms)).await;
-                            info!("delay call {} {} {}", delay_ms, plugin_id, fn_name);
+                            // info!("delay call {} {} {}", delay_ms, plugin_id, fn_name);
                             _event_tx
                                 .send(Event::PluginCallFn { plugin_id, fn_name })
                                 .unwrap();
@@ -193,7 +193,9 @@ impl Core {
                         _server.handle_event(event.clone());
                     }
                     Event::ServerLog(msg) => {
-                        println!("{msg}");
+                        if _server.retain_log(&msg) {
+                            println!("{msg}");
+                        }
                     }
                     Event::PlayerMessage { player: _, msg } => {
                         if msg.starts_with("#") {

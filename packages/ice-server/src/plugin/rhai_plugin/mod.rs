@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use ice_util::minecraft::rtext::{Component, ComponentObject};
 use minecraft_rtext::MinecraftRtextPackage;
+use ::regex::Regex;
 use rhai::{
     packages::Package,
     serde::{from_dynamic, to_dynamic},
@@ -189,6 +190,10 @@ impl Server {
         self.inner.tellraw(target, component)
     }
 
+    pub fn add_log_filter(&mut self, filter: String) {
+        self.inner.add_log_filter(Regex::new(&filter).unwrap())
+    }
+
     fn build_extra(builder: &mut TypeBuilder<Self>) {
         builder
             .with_fn("start", Self::start)
@@ -201,6 +206,7 @@ impl Server {
             .with_fn("tellraw", Self::tellraw::<f64>)
             .with_fn("tellraw", Self::tellraw::<bool>)
             .with_fn("tellraw", Self::tellraw::<ComponentObject>)
-            .with_fn("tellraw", Self::tellraw::<Vec<ComponentObject>>);
+            .with_fn("tellraw", Self::tellraw::<Vec<ComponentObject>>)
+            .with_fn("add_log_filter", Self::add_log_filter);
     }
 }
