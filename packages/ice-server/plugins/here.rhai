@@ -60,7 +60,7 @@ fn on_server_log(content) {
         let position = regex::regex_captures(content, REGEX_POSITION);
         position = position.extract(1..=3).map(|s| parse_float(s));
 
-        display(server, name, dimension, position);
+        display(name, dimension, position);
 
         here_user -= 1;
     }
