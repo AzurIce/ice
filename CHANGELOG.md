@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.35](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.34..0.1.0-alpha.35) - 2024-09-14
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Functions in rhai cannot capture env, so use closure instead - ([6af4d46](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/6af4d46cab1cf1016574ce1044ca962c4b5f9e23))
+- Here plugin, ClickEvent::RunCommand - ([1ccc32d](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/1ccc32d43843b62136d2c21fd9eb1d986675f0ff))
+- Here plugin, tellraw use build_component to turn array into str - ([a25c762](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/a25c76204602165b9a76bf87596d0b87c411281f))
+- Plugin here disabled xaero_waypoint, not working - ([60a8af5](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/60a8af5e34645cef599465543b17c5d4d97e87ca))
+
 ## [0.1.0-alpha.34](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.33..0.1.0-alpha.34) - 2024-09-13
 
 ### <!-- 1 -->🕷️ Bug Fixes
