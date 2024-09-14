@@ -171,7 +171,8 @@ fn remove_file(path: impl AsRef<Path>) -> Result<(), anyhow::Error> {
         )
         .unwrap(),
     );
-    span.in_scope(|| remove_file(&path))
+    span.in_scope(|| fs::remove_file(&path))?;
+    Ok(())
 }
 
 #[derive(Debug)]
