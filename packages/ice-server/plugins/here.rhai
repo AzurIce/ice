@@ -44,22 +44,23 @@ const display = |player, dimension, position| {
     let y = position[1].to_int();
     let z = position[2].to_int();
 
-    let dimension_name = dimension.replace("minecraft:", "");
+    let dimension_name = dimension;
+    dimension_name.replace("minecraft:", "");
     if config.display_voxel_waypoint {
-        let voxel_waypoint_command = `newWaypoint x:${x}, y:${y}, z:${z}, dim:${dimension}`;
-        let voxel_waypoint_text = Rtext(`[+V]`).color(Color::Gold)
+        let voxel_waypoint_command = `/newWaypoint x:${x}, y:${y}, z:${z}, dim:${dimension}`;
+        let voxel_waypoint_text = Rtext(`[+V]`).color(Color::Aqua)
             .hover_event(HoverEvent::ShowText(Rtext("§6Voxel§r: 点击添加路径点")))
             .click_event(ClickEvent::RunCommand(voxel_waypoint_command));
         text.push(voxel_waypoint_text);
     }
-    if config.display_xaero_waypoint {
-        let xaero_waypoint_command = `xaero_waypoint_add:${player}'s Location:${player[0]}:${x}:${y}:${z}:6:false:0`;
-        xaero_waypoint_command += `:Internal_${dimension_name}_waypoints`;
-        let xaero_waypoint_text = Rtext(`[+X]`).color(Color::Gold)
-            .hover_event(HoverEvent::ShowText(Rtext("§6Xaeros Minimap§r: 点击添加路径点")))
-            .click_event(ClickEvent::RunCommand(xaero_waypoint_command));
-        text.push(xaero_waypoint_text);
-    }
+    // if config.display_xaero_waypoint {
+    //     let xaero_waypoint_command = `xaero_waypoint:${player}'s Location:${player[0]}:${x}:${y}:${z}:5:false:0`;
+    //     xaero_waypoint_command += `:Internal-${dimension_name}-waypoints`;
+    //     let xaero_waypoint_text = Rtext(`[+X]`).color(Color::Gold)
+    //         .hover_event(HoverEvent::ShowText(Rtext("§6Xaeros Minimap§r: 点击添加路径点")))
+    //         .click_event(ClickEvent::SuggestCommand(xaero_waypoint_command));
+    //     text.push(xaero_waypoint_text);
+    // }
 
     server.tellraw("@a", build_component(text));
     let time = 10;
