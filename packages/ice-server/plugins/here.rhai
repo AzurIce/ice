@@ -49,7 +49,7 @@ const display = |player, dimension, position| {
         let voxel_waypoint_command = `newWaypoint x:${x}, y:${y}, z:${z}, dim:${dimension}`;
         let voxel_waypoint_text = Rtext(`[+V]`).color(Color::Gold)
             .hover_event(HoverEvent::ShowText(Rtext("§6Voxel§r: 点击添加路径点")))
-            .click_event(ClickEvent::ExecuteCommand(voxel_waypoint_command));
+            .click_event(ClickEvent::RunCommand(voxel_waypoint_command));
         text.push(voxel_waypoint_text);
     }
     if config.display_xaero_waypoint {
@@ -57,7 +57,7 @@ const display = |player, dimension, position| {
         xaero_waypoint_command += `:Internal_${dimension_name}_waypoints`;
         let xaero_waypoint_text = Rtext(`[+X]`).color(Color::Gold)
             .hover_event(HoverEvent::ShowText(Rtext("§6Xaeros Minimap§r: 点击添加路径点")))
-            .click_event(ClickEvent::ExecuteCommand(xaero_waypoint_command));
+            .click_event(ClickEvent::RunCommand(xaero_waypoint_command));
         text.push(xaero_waypoint_text);
     }
 
