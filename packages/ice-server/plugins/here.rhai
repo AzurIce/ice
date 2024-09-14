@@ -61,7 +61,7 @@ const display = |player, dimension, position| {
         text.push(xaero_waypoint_text);
     }
 
-    server.tellraw("@a", text);
+    server.tellraw("@a", build_component(text));
     let time = 10;
     // server.say(text);
     server.writeln(`effect give ${player} minecraft:glowing ${time} 0 true`);
