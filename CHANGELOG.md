@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.36](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.35..0.1.0-alpha.36) - 2024-09-14
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Remove mod file causes infinite recursion - ([d4ff30d](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/d4ff30d1da81d44b7d3535ad72f8e9168838cbac))
+
 ## [0.1.0-alpha.35](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.34..0.1.0-alpha.35) - 2024-09-14
 
 ### <!-- 1 -->🕷️ Bug Fixes
