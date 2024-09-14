@@ -14,7 +14,7 @@ use rhai::{
     CallFnOptions, CustomType, Engine, EvalAltResult, FuncArgs, Scope, TypeBuilder, AST,
 };
 use rhai_fs::FilesystemPackage;
-use tracing::error;
+use tracing::{error, trace};
 
 pub mod minecraft_rtext;
 mod regex;
@@ -53,15 +53,18 @@ impl RhaiPlugin {
         let server = Server { inner: server };
 
         // let t = Instant::now();
+        // trace!("initializing engine...");
         let mut engine = engine_with_lib();
         // println!("engine initializing cost: {:?}", t.elapsed());
 
         // let t = Instant::now();
         // ? Compile the plugin
+        // trace!("compiling ast...");
         let ast = engine.compile_file(path).unwrap();
         // println!("ast compile cost: {:?}", t.elapsed());
 
         // let t = Instant::now();
+        // trace!("getting id...");
         let mut scope = Scope::new();
         // ? get id()
         let id = engine
@@ -77,6 +80,8 @@ impl RhaiPlugin {
 
         // let t = Instant::now();
         // ? Register apis
+        // trace!("plugin[{id}]: registering apis...");
+        scope.push("server", server.clone());
         engine.build_type::<Server>();
         let _server = server.clone();
         engine.register_fn("server", move || _server.clone());
@@ -89,7 +94,8 @@ impl RhaiPlugin {
         // println!("register type and fn cost: {:?}", t.elapsed());
 
         //? Initialize global variables
-        engine.eval_ast_with_scope::<()>(&mut scope, &ast).unwrap();
+        // trace!("plugin[{id}]: initializing global variables...");
+        engine.run_ast_with_scope(&mut scope, &ast).unwrap();
 
         Self {
             id,
@@ -101,10 +107,11 @@ impl RhaiPlugin {
 
     /// Calls a function in the plugin, skip if not exist
     pub fn call_fn(&mut self, fn_name: impl AsRef<str>, args: impl FuncArgs) {
+        // trace!("plugin[{}]: calling function [{}]...", self.id, fn_name.as_ref());
         let fn_name = fn_name.as_ref();
 
         let res = self.engine.call_fn_with_options::<()>(
-            CallFnOptions::new().eval_ast(false),
+            CallFnOptions::new().eval_ast(false).rewind_scope(false),
             &mut self.scope,
             &self.ast,
             &fn_name,
