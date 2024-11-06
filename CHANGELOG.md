@@ -2,6 +2,70 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.36](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.35..0.1.0-alpha.36) - 2024-09-14
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Remove mod file causes infinite recursion - ([d4ff30d](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/d4ff30d1da81d44b7d3535ad72f8e9168838cbac))
+
+## [0.1.0-alpha.35](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.34..0.1.0-alpha.35) - 2024-09-14
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Functions in rhai cannot capture env, so use closure instead - ([6af4d46](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/6af4d46cab1cf1016574ce1044ca962c4b5f9e23))
+- Here plugin, ClickEvent::RunCommand - ([1ccc32d](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/1ccc32d43843b62136d2c21fd9eb1d986675f0ff))
+- Here plugin, tellraw use build_component to turn array into str - ([a25c762](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/a25c76204602165b9a76bf87596d0b87c411281f))
+- Plugin here disabled xaero_waypoint, not working - ([60a8af5](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/60a8af5e34645cef599465543b17c5d4d97e87ca))
+
+## [0.1.0-alpha.34](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.33..0.1.0-alpha.34) - 2024-09-13
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Plugin here Function not found: request_player_position - ([a44b74e](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/a44b74ede52a60bb5c65680bfc53679856dd88e9))
+- Here display server argument - ([e986869](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/e986869ef6d9467d13d65af431365057aa95ee79))
+
+## [0.1.0-alpha.33](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.32..0.1.0-alpha.33) - 2024-09-13
+
+### <!-- 0 -->🎈 Features
+
+
+- Properties - ([dbf32a0](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/dbf32a09ee9ddfeb2876e8fcefb3106b32bdb6ee))
+
+## [0.1.0-alpha.32](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.31..0.1.0-alpha.32) - 2024-09-13
+
+### <!-- 0 -->🎈 Features
+
+
+- Log filter - ([8051a74](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/8051a741f79d7aa25ec98c342d68f4cbdc894ae2))
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Here plugin - ([2dce8b6](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/2dce8b63f2e091d1f9c54ac551d25b8d96ac1ab6))
+
+## [0.1.0-alpha.31](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.30..0.1.0-alpha.31) - 2024-09-12
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Ice modrinth update does not remove old file - ([782279c](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/782279c0d7c8fac994e6b7815d32a1f12a1dfa52))
+- Ice modrinth sync does not skip downloading exist mod - ([2a9bdbd](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/2a9bdbd99068dbef119d099630c5a7f8c353da8c))
+
+## [0.1.0-alpha.30](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.29..0.1.0-alpha.30) - 2024-09-12
+
+### <!-- 2 --> Refactor
+
+
+- Rewrite plugin delay call, adjust plugin APIs, rewrite scoreboard plugin in Rhai, support plugin config - ([bd56268](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/bd56268609299a07cae0cd1767d1d847d36d6881))
+
+### <!-- 3 -->📚 Documentation
+
+
+- Improved some document, updated README - ([9fbb222](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/9fbb2220c7edb69ea803ea393b30126b9d08c0ef))
+
 ## [0.1.0-alpha.29](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.28..0.1.0-alpha.29) - 2024-09-10
 
 ### <!-- 2 --> Refactor

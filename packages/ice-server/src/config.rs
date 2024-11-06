@@ -16,8 +16,10 @@ pub struct Config {
     #[serde(default)]
     pub mods: HashMap<String, String>, // slug -> version_number
     #[serde(default)]
-    pub plugins: HashMap<String, Value>,
+    pub plugins: HashMap<String, PluginConfig>,
 }
+
+pub type PluginConfig = HashMap<String, Value>;
 
 // #[derive(Serialize, Deserialize, Debug, Clone)]
 // #[serde(untagged)]
@@ -53,6 +55,10 @@ impl Config {
         fs::write(path, config).map_err(|err| format!("failed to write config file: {:?}", err))?;
         Ok(())
     }
+
+    pub fn get_plugin_config(&self, name: &str) -> Option<&PluginConfig> {
+        self.plugins.get(name)
+    }
 }
 
 #[cfg(test)]
@@ -60,11 +66,15 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_new_config() {
-        let config = Config::new("name".to_string(), "version".to_string(), Loader::Quilt);
+    fn test_config() {
+        let mut config = Config::new("name".to_string(), "version".to_string(), Loader::Quilt);
+        let mut map: PluginConfig = HashMap::new();
+        map.insert("interval".to_string(), Value::Integer(10));
+        config.plugins.insert("scoreboard".to_string(), map);
         let toml = toml::to_string(&config).unwrap();
         println!("{toml}");
-        let toml = toml::to_string_pretty(&config).unwrap();
-        println!("{toml}");
+        // let toml = toml::to_string_pretty(&config).unwrap();
+        // println!("{toml}");
+        println!("{:?}", config.get_plugin_config("scoreboard"));
     }
 }

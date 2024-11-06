@@ -1,17 +1,25 @@
-use std::{path::PathBuf, time::Instant};
+#![warn(missing_docs)]
+//! Rhai plugin
+//!
+//! This module contains the implementation of the Rhai plugin
+//! and the related types and functions.
+use std::path::PathBuf;
 
 use ice_util::minecraft::rtext::{Component, ComponentObject};
 use minecraft_rtext::MinecraftRtextPackage;
+use ::regex::Regex;
 use rhai::{
-    packages::Package, CustomType, Engine, EvalAltResult, FuncArgs, Scope, TypeBuilder, AST,
+    packages::Package,
+    serde::{from_dynamic, to_dynamic},
+    CallFnOptions, CustomType, Engine, EvalAltResult, FuncArgs, Scope, TypeBuilder, AST,
 };
 use rhai_fs::FilesystemPackage;
-use tracing::error;
+use tracing::{error, trace};
 
 pub mod minecraft_rtext;
 mod regex;
 
-pub fn engine_with_lib() -> Engine {
+pub(crate) fn engine_with_lib() -> Engine {
     let mut engine = Engine::new();
 
     let pkg = MinecraftRtextPackage::new();
@@ -25,9 +33,9 @@ pub fn engine_with_lib() -> Engine {
 
 use super::Plugin;
 
+/// An Ice plugin that is written in rhai
 pub struct RhaiPlugin {
     id: String,
-    server: Server,
     engine: Engine,
     scope: Scope<'static>,
     ast: AST,
@@ -40,36 +48,57 @@ impl RhaiPlugin {
         first eval and id cost: 457.25µs
         register type and fn cost: 236.625µs
     */
+    /// Create a [`RhaiPlugin`] for a specific [`Server`] from a `.rhai` file
     pub fn from_file(server: crate::server::Server, path: PathBuf) -> Self {
         let server = Server { inner: server };
 
         // let t = Instant::now();
+        // trace!("initializing engine...");
         let mut engine = engine_with_lib();
         // println!("engine initializing cost: {:?}", t.elapsed());
 
         // let t = Instant::now();
+        // ? Compile the plugin
+        // trace!("compiling ast...");
         let ast = engine.compile_file(path).unwrap();
         // println!("ast compile cost: {:?}", t.elapsed());
 
         // let t = Instant::now();
+        // trace!("getting id...");
         let mut scope = Scope::new();
-        engine.eval_ast_with_scope::<()>(&mut scope, &ast).unwrap();
+        // ? get id()
         let id = engine
-            .call_fn::<String>(&mut scope, &ast, "id", ())
+            .call_fn_with_options::<String>(
+                CallFnOptions::new().eval_ast(false),
+                &mut scope,
+                &ast,
+                "id",
+                (),
+            )
             .unwrap();
         // println!("first eval and id cost: {:?}", t.elapsed());
 
         // let t = Instant::now();
-        // engine.register_global_module(exported_module!(server_api).into());
-        // println!("register module cost: {:?}", t.elapsed());
-
-        // let t = Instant::now();
+        // ? Register apis
+        // trace!("plugin[{id}]: registering apis...");
+        scope.push("server", server.clone());
         engine.build_type::<Server>();
+        let _server = server.clone();
+        engine.register_fn("server", move || _server.clone());
+        let _server = server.clone();
+        let _id = id.clone();
+        engine.register_fn("config", move || {
+            let server = _server.clone();
+            server.clone().get_plugin_config(_id.clone())
+        });
         // println!("register type and fn cost: {:?}", t.elapsed());
+
+        //? Initialize global variables
+        // trace!("plugin[{id}]: initializing global variables...");
+        engine.run_ast_with_scope(&mut scope, &ast).unwrap();
 
         Self {
             id,
-            server,
             engine,
             scope,
             ast,
@@ -78,11 +107,16 @@ impl RhaiPlugin {
 
     /// Calls a function in the plugin, skip if not exist
     pub fn call_fn(&mut self, fn_name: impl AsRef<str>, args: impl FuncArgs) {
+        // trace!("plugin[{}]: calling function [{}]...", self.id, fn_name.as_ref());
         let fn_name = fn_name.as_ref();
 
-        let res = self
-            .engine
-            .call_fn::<()>(&mut self.scope, &self.ast, &fn_name, args);
+        let res = self.engine.call_fn_with_options::<()>(
+            CallFnOptions::new().eval_ast(false).rewind_scope(false),
+            &mut self.scope,
+            &self.ast,
+            &fn_name,
+            args,
+        );
         if let Err(err) = res {
             if let EvalAltResult::ErrorFunctionNotFound(name, _) = err.as_ref() {
                 if name != fn_name {
@@ -101,19 +135,23 @@ impl Plugin for RhaiPlugin {
     }
 
     fn on_load(&mut self) {
-        self.call_fn("on_load", (self.server.clone(),));
+        self.call_fn("on_load", ());
     }
 
     fn on_server_log(&mut self, content: String) {
-        self.call_fn("on_server_log", (self.server.clone(), content));
+        self.call_fn("on_server_log", (content,));
     }
 
     fn on_server_done(&mut self) {
-        self.call_fn("on_server_done", (self.server.clone(),));
+        self.call_fn("on_server_done", ());
     }
 
     fn on_player_message(&mut self, player: String, msg: String) {
-        self.call_fn("on_player_message", (self.server.clone(), player, msg));
+        self.call_fn("on_player_message", (player, msg));
+    }
+
+    fn on_call_fn(&mut self, fn_name: String) {
+        self.call_fn(fn_name, ());
     }
 }
 
@@ -124,6 +162,17 @@ struct Server {
 }
 
 impl Server {
+    pub fn get_plugin_config(&mut self, id: String) -> rhai::Map {
+        let config = self
+            .inner
+            .get_plugin_config(id)
+            .cloned()
+            .unwrap_or_default();
+        let config = to_dynamic(config).unwrap();
+        let config = from_dynamic(&config).unwrap();
+        config
+    }
+
     pub fn running(&mut self) -> bool {
         self.inner.running()
     }
@@ -152,6 +201,10 @@ impl Server {
         self.inner.tellraw(target, component)
     }
 
+    pub fn add_log_filter(&mut self, filter: String) {
+        self.inner.add_log_filter(Regex::new(&filter).unwrap())
+    }
+
     fn build_extra(builder: &mut TypeBuilder<Self>) {
         builder
             .with_fn("start", Self::start)
@@ -164,6 +217,7 @@ impl Server {
             .with_fn("tellraw", Self::tellraw::<f64>)
             .with_fn("tellraw", Self::tellraw::<bool>)
             .with_fn("tellraw", Self::tellraw::<ComponentObject>)
-            .with_fn("tellraw", Self::tellraw::<Vec<ComponentObject>>);
+            .with_fn("tellraw", Self::tellraw::<Vec<ComponentObject>>)
+            .with_fn("add_log_filter", Self::add_log_filter);
     }
 }

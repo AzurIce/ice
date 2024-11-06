@@ -2,7 +2,9 @@ fn id() {
     "rtext"
 }
 
-fn on_load(server) {
+let server = server();
+
+fn on_load() {
     print(build_component("text"));
     print(build_component(["a", 0.3, 1, false, Rtext("text").color(Color::Green).obfuscated()]));
     // print(build_component(1));
@@ -19,7 +21,7 @@ fn on_load(server) {
     server.tellraw("@a", rtext)
 }
 
-fn on_player_message(server, player, msg) {
+fn on_player_message(player, msg) {
     if msg == "#rtext" {
         let rtext = Rtext(true)
             .color(Color::Green)

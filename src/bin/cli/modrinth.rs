@@ -171,7 +171,8 @@ fn remove_file(path: impl AsRef<Path>) -> Result<(), anyhow::Error> {
         )
         .unwrap(),
     );
-    span.in_scope(|| remove_file(&path))
+    span.in_scope(|| fs::remove_file(&path))?;
+    Ok(())
 }
 
 #[derive(Debug)]
@@ -296,12 +297,13 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &LocalModsConfig) {
 
     // Then, download mods not existed
     info!("downloading other mods...");
-    let mut stream = stream::iter(
-        config
-            .get_mods()
-            .into_iter()
-            .filter(|value| matches!(value, Mod::Modrinth(_))),
-    )
+    let mut stream = stream::iter(config.get_mods().into_iter().filter(|value| {
+        if let Mod::Modrinth(modrinth_mod) = value {
+            !synced_mods.contains(&modrinth_mod.slug)
+        } else {
+            false
+        }
+    }))
     .map(|modrinth_mod| async {
         match modrinth_mod {
             Mod::Modrinth(modrinth_mod) => {
@@ -417,6 +419,8 @@ async fn update_mod(
         span.pb_set_message("downloading...");
         let version_file = version.get_primary_file();
         download_version_file(version_file, current_dir).await?;
+        span.pb_set_message("removing old file...");
+        remove_file(path)?;
         Ok(UpdateRes::Updated(project.slug, version.version_number))
     }
     .instrument(span)

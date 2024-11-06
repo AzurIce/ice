@@ -12,9 +12,9 @@ use crate::config::Config;
 use command::{bkarch::BkArch, bksnap::BkSnap, Command};
 
 use plugin::{scoreboard::ScoreBoard, Plugin, RhaiPlugin};
+use regex::Regex;
 use server::Server;
-use std::any::Any;
-use tracing::info;
+use tracing::{info, warn};
 
 pub mod command;
 pub mod config;
@@ -27,8 +27,11 @@ macro_rules! include_plugin {
     };
 }
 
-const BUILTIN_PLUGINS: &[(&[u8], &str)] =
-    &[include_plugin!("here.rhai"), include_plugin!("rtext.rhai")];
+const BUILTIN_PLUGINS: &[(&[u8], &str)] = &[
+    include_plugin!("here.rhai"),
+    include_plugin!("rtext.rhai"),
+    include_plugin!("scoreboard.rhai"),
+];
 
 #[derive(Debug, Clone)]
 pub enum Event {
@@ -41,6 +44,10 @@ pub enum Event {
     },
     PluginDelayCall {
         delay_ms: u64,
+        plugin_id: String,
+        fn_name: String,
+    },
+    PluginCallFn {
         plugin_id: String,
         fn_name: String,
     },
@@ -128,8 +135,10 @@ impl Core {
             plugin.on_load();
         }
 
-        let mut plugins: Vec<Box<dyn Plugin>> =
-            vec![Box::new(ScoreBoard::init(server.clone()).await)];
+        let mut plugins = vec![];
+        // let rust_plugins: Vec<Box<dyn Plugin>> =
+        //     vec![Box::new(ScoreBoard::init(server.clone()).await)];
+        // plugins.extend(rust_plugins);
         plugins.extend(
             rhai_plugins
                 .into_iter()
@@ -157,6 +166,7 @@ impl Core {
         });
 
         // Thread to handle server events
+        let _event_tx = event_tx.clone();
         let _command_tx = command_tx.clone();
         let mut _server = server.clone();
         tokio::spawn(async move {
@@ -167,30 +177,26 @@ impl Core {
                         plugin_id,
                         fn_name,
                     } => {
-                        info!(
-                            "delay call {} {} {}, waiting...",
-                            delay_ms, plugin_id, fn_name
-                        );
-                        let _plugins = plugins.clone();
-                        let _server = _server.clone();
+                        // info!(
+                        //     "delay call {} {} {}, waiting...",
+                        //     delay_ms, plugin_id, fn_name
+                        // );
+                        let _event_tx = _event_tx.clone();
                         tokio::spawn(async move {
                             tokio::time::sleep(Duration::from_millis(delay_ms)).await;
-                            info!("delay call {} {} {}", delay_ms, plugin_id, fn_name);
-                            let mut plugins = _plugins.lock().unwrap();
-                            if let Some(plugin) = plugins
-                                .iter_mut()
-                                .find(|p| p.id() == plugin_id)
-                                .and_then(|p| (p as &mut dyn Any).downcast_mut::<RhaiPlugin>())
-                            {
-                                plugin.call_fn(fn_name, (_server,))
-                            }
+                            // info!("delay call {} {} {}", delay_ms, plugin_id, fn_name);
+                            _event_tx
+                                .send(Event::PluginCallFn { plugin_id, fn_name })
+                                .unwrap();
                         });
                     }
                     Event::ServerDown => {
                         _server.handle_event(event.clone());
                     }
                     Event::ServerLog(msg) => {
-                        println!("{msg}");
+                        if _server.retain_log(&msg) {
+                            println!("{msg}");
+                        }
                     }
                     Event::PlayerMessage { player: _, msg } => {
                         if msg.starts_with("#") {
@@ -202,6 +208,7 @@ impl Core {
                     Event::ServerDone => {
                         info!("server done");
                     }
+                    _ => (),
                 }
 
                 for plugin in plugins.lock().unwrap().iter_mut() {
@@ -253,6 +260,7 @@ impl Core {
 
     pub fn start_server(&mut self) {
         if !self.server.running() {
+            self.update_properties();
             self.server.start().unwrap();
         }
     }
@@ -265,5 +273,25 @@ impl Core {
 
     pub fn say<S: AsRef<str>>(&mut self, content: S) {
         self.server.say(content)
+    }
+
+    fn update_properties(&self) {
+        info!("checking properties...");
+        let path = self.server_dir.join("server.properties");
+        if !path.exists() {
+            warn!("server.properties not found, cannot patch, skipping...");
+            return;
+        }
+        info!("patching properties...");
+        let mut buf = fs::read_to_string(&path).expect("failed to read server.properties");
+
+        for (key, value) in &self.config.properties {
+            info!("setting property [{}] to [{}]", key, value);
+            let regex = Regex::new(format!(r"{}=([^#\n\r]*)", key).as_str()).unwrap();
+            buf = regex
+                .replace(&buf, format!("{}={}", key, value))
+                .to_string();
+        }
+        fs::write(path, buf.as_bytes()).expect("failed to write server.properties: {:?}");
     }
 }
