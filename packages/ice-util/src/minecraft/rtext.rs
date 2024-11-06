@@ -3,6 +3,8 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 
 /// Different representations of a minecraft text component
+/// 
+/// Do not directly construct it, use [`ComponentObject`] or other variant's [`into`] method instead
 ///
 /// See https://zh.minecraft.wiki/w/%E6%96%87%E6%9C%AC%E7%BB%84%E4%BB%B6
 #[derive(Clone)]
@@ -22,12 +24,6 @@ pub fn build_component<T: Into<Component>>(component: T) -> String {
         Component::String(obj) => obj.to_string(),
         Component::Bool(obj) => obj.to_string(),
         Component::F64(obj) => obj.to_string(),
-    }
-}
-
-impl Component {
-    pub fn new<T: Into<Component>>(v: T) -> Self {
-        v.into()
     }
 }
 
@@ -61,7 +57,7 @@ impl From<f64> for Component {
     }
 }
 
-/// Minecraft text component
+/// Minecraft text component object
 ///
 /// See https://zh.minecraft.wiki/w/%E6%96%87%E6%9C%AC%E7%BB%84%E4%BB%B6
 #[derive(Clone, Debug, Serialize, Deserialize)]

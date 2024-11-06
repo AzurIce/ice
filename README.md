@@ -96,12 +96,13 @@ Options:
     - `version`：游戏版本
 
     - `loader`：使用的加载器
+      > `quilt` 会允许使用 `fabric` 的 mod
 
     - `mods`：定义的 mod 列表
 
         是一系列 `slug` - `version_number` 的键值对，`slug` 即 Modrinth 网站 mod 页面 url 内的 mod 名称。
 
-- `ice modrinth sync`：根据 `mods.toml` 中的定义下载缺失的 mod、移除多余的 mod（只会移除存在于 Modrinth 上的 Mod）、更新版本不对的 mod。
+- `ice modrinth sync`：根据 `mods.toml` 中的定义下载缺失的 mod、移除多余的 mod（只会移除存在于 Modrinth 上的 Mod）、重新下载版本不对的 mod。
 
 - `ice modrinth update`：下载当前目录所有 mod 符合 `version` 和 `loader` 的最新版本，删除老版本，并更新到 `mods.toml` 中。
 - `ice modrinth add <slug>`: 下载符合 `version` 和 `loader` 的最新版本 mod，并更新到 `mods.toml` 中
@@ -151,6 +152,15 @@ Options:
 ## Ice 内核
 
 就是以前的 MCSH / ACH。
+
+### Ice 插件
+
+Ice 提供了一个基于 [Rhai](https://github.com/rhaiscript/rhai) 的插件系统，可以通过编写 `rhai` 脚本的方式来扩展 ice 的功能。
+
+所有的插件被放在 `plugins` 目录下。
+
+Ice 内置了一些插件，会在启动时自动复制到 `plugins` 目录下：
+- `here`：显示玩家位置的插件
 
 ---
 
