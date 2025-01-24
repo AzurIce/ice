@@ -21,8 +21,8 @@ impl MinecraftServer {
         info!("Server::start");
         
         let mut command = Command::new("java");
-        let mut args = vec!["-jar", config.loader.launch_filename_str(), "--nogui"];
-        args.extend(config.jvm_options.split(' ').collect::<Vec<&str>>());
+        let mut args = config.jvm_options.split(' ').collect::<Vec<&str>>();
+        args.extend(["-jar", config.loader.launch_filename_str(), "--nogui"]);
 
         command.current_dir("./server");
         command.args(args);
