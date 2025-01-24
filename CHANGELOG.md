@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.37](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.36..0.1.0-alpha.37) - 2025-01-24
+
+### <!-- 0 -->🎈 Features
+
+
+- Supported fabric loader for server - ([b6f7ad6](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/b6f7ad6d348eef1bf36bb6b67ab50fdf8d62bdf4))
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Now get_jar_files returns empty when dir not exist - ([5165098](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/51650980b6f4f2cc044d45e18061fae7f12986a6))
+- Download_from_url now will create dir if not exists - ([23e91cc](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/23e91ccc9f97be63b307cd8b6183450b7b451049))
+
 ## [0.1.0-alpha.36](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.35..0.1.0-alpha.36) - 2024-09-14
 
 ### <!-- 1 -->🕷️ Bug Fixes
@@ -64,6 +77,7 @@ All notable changes to this project will be documented in this file.
 ### <!-- 3 -->📚 Documentation
 
 
+- Improve docs - ([e3590d6](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/e3590d601c258e5f78b5608a2ff3ca162842a953))
 - Improved some document, updated README - ([9fbb222](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/9fbb2220c7edb69ea803ea393b30126b9d08c0ef))
 
 ## [0.1.0-alpha.29](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.28..0.1.0-alpha.29) - 2024-09-10
