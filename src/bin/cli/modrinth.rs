@@ -577,6 +577,9 @@ async fn add_mod(
 }
 
 fn get_jar_files(dir: &Path) -> Vec<DirEntry> {
+    if !dir.exists() {
+        return vec![]
+    }
     fs::read_dir(dir)
         .unwrap()
         .filter_map(|entry| entry.ok())
