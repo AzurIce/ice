@@ -6,6 +6,7 @@ pub mod time;
 
 use std::path::Path;
 
+use anyhow::Context;
 use futures_util::StreamExt;
 use std::error::Error;
 use tokio::io::AsyncWriteExt;
@@ -43,6 +44,11 @@ pub async fn download_from_url<S: AsRef<str>, P: AsRef<Path>>(
 ) -> Result<(), anyhow::Error> {
     let url = url.as_ref();
     let path = path.as_ref();
+    if let Some(parent) = path.parent() {
+        if !parent.exists() {
+            std::fs::create_dir_all(parent).context("failed to create dir")?;
+        }
+    }
 
     let res = reqwest::get(url).await?;
     let total_bytes = res.content_length().unwrap();
