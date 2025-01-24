@@ -5,7 +5,6 @@ use std::{
 };
 
 use super::regex::{done_regex, player_regex};
-use ice_core::Loader;
 use ice_util::minecraft::rtext::{build_component, Component};
 use log::{error, info};
 
@@ -20,12 +19,9 @@ pub struct MinecraftServer {
 impl MinecraftServer {
     pub fn run(config: Config, event_tx: tokio::sync::mpsc::UnboundedSender<Event>) -> Self {
         info!("Server::start");
-        let jar_filename = match config.loader {
-            Loader::Quilt => "quilt-server-launch.jar",
-            _ => panic!("not implemented"),
-        };
+        
         let mut command = Command::new("java");
-        let mut args = vec!["-jar", jar_filename, "--nogui"];
+        let mut args = vec!["-jar", config.loader.launch_filename_str(), "--nogui"];
         args.extend(config.jvm_options.split(' ').collect::<Vec<&str>>());
 
         command.current_dir("./server");

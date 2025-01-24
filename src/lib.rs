@@ -1,4 +1,4 @@
-pub mod api;
+pub mod modrinth;
 pub mod config;
 pub mod core;
 pub mod error;

@@ -21,3 +21,14 @@ pub async fn get_latest_version() -> Result<String, Box<dyn Error>> {
         .to_string();
     Ok(version)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_get_latest_version() {
+        let version = get_latest_version().await.unwrap();
+        println!("{version}");
+    }
+}

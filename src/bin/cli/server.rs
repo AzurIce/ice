@@ -3,7 +3,7 @@ use std::{
     path::Path,
 };
 
-use ice::api::mojang::get_latest_version;
+use ice_api_tool::mojang::get_latest_version;
 use ice_core::Loader;
 use ice_server::{config::Config, Core};
 use tracing::{info, Level};

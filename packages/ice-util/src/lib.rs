@@ -10,6 +10,10 @@ use futures_util::StreamExt;
 use std::error::Error;
 use tokio::io::AsyncWriteExt;
 
+pub fn get_url_filename(url: &str) -> Option<&str> {
+    url.split("/").last()
+}
+
 pub fn get_parent_version(version: String) -> String {
     let x = version.rfind(".");
     if let Some(x) = x {

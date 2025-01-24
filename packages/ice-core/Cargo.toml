@@ -4,11 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+ice-api-tool.workspace = true
 ice-util.workspace = true
 log = "0.4.22"
 reqwest = { version = "0.12.5", features = ["blocking"] }
-serde = "1.0.204"
 clap = { version = "4.5.9", optional = true }
+serde = { version = "1.0.217", features = ["derive"] }
 
 [features]
 clap = ["dep:clap"]

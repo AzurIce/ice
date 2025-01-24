@@ -9,16 +9,16 @@ use anyhow::Context;
 use color_print::{cformat, cprintln};
 use futures::{stream, StreamExt};
 use ice::{
-    api::{
-        self,
-        modrinth::{
-            get_latest_version_from_hash, get_latest_version_from_slug, types::Version,
-            utils::download_version_file, HashMethod,
-        },
-    },
     config::LocalModsConfig,
     core::{Mod, ModrinthMod},
     // log::logger,
+};
+use ice_api_tool::{
+    self as api,
+    modrinth::{
+        get_latest_version_from_hash, get_latest_version_from_slug, types::Version,
+        utils::download_version_file, HashMethod,
+    },
 };
 use ice_core::Loader;
 use ice_util::{fs::get_sha1_hash, get_parent_version};
@@ -28,6 +28,28 @@ use tracing::{info, info_span, Instrument, Span};
 use tracing_indicatif::{span_ext::IndicatifSpanExt, IndicatifLayer};
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+fn init_logger() {
+    let indicatif_layer = IndicatifLayer::new();
+
+    let filter_layer = EnvFilter::try_from_default_env()
+        .or_else(|_| EnvFilter::try_new("ice=info"))
+        .unwrap();
+
+    tracing_subscriber::registry()
+        .with(filter_layer)
+        .with(
+            tracing_subscriber::fmt::layer()
+                .with_level(false)
+                .with_target(false)
+                .without_time()
+                .with_writer(indicatif_layer.get_stderr_writer()),
+        )
+        .with(indicatif_layer)
+        .init();
+}
+
+// MARK: CLI
 
 /// Initialize a `mods.toml` under `current_dir`
 ///
@@ -55,25 +77,198 @@ pub async fn init<P: AsRef<Path>, S: AsRef<str>>(
     config.save().unwrap();
 }
 
-fn init_logger() {
-    let indicatif_layer = IndicatifLayer::new();
+/// The `sync` command
+#[tokio::main]
+pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &LocalModsConfig) {
+    init_logger();
 
-    let filter_layer = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new("ice=info"))
-        .unwrap();
+    let current_dir = current_dir.as_ref();
 
-    tracing_subscriber::registry()
-        .with(filter_layer)
-        .with(
-            tracing_subscriber::fmt::layer()
-                .with_level(false)
-                .with_target(false)
-                .without_time()
-                .with_writer(indicatif_layer.get_stderr_writer()),
-        )
-        .with(indicatif_layer)
-        .init();
+    let mut synced_mods = HashSet::<String>::new();
+
+    // First, use [`sync_file`] to sync all existed mod files
+    info!("checking existed mods...");
+    let jar_files = get_jar_files(current_dir);
+    let mut stream = stream::iter(jar_files)
+        .map(|entry| async {
+            let filename = entry.file_name();
+            let filename = filename.to_str().unwrap();
+
+            sync_file(entry, config, &current_dir)
+                .await
+                .context(format!("sync file {}", filename))
+        })
+        .buffer_unordered(5);
+
+    while let Some(res) = stream.next().await {
+        match res {
+            Ok(res) => match res {
+                SyncRes::Downloaded(slug, version) => {
+                    synced_mods.insert(slug.clone());
+                    info!("{}", cformat!("<g>Updated</> {} to {}", slug, version));
+                }
+                SyncRes::Removed(path) => {
+                    info!(
+                        "{}",
+                        cformat!(
+                            "<r>Removed</> {}",
+                            path.file_name().unwrap().to_str().unwrap()
+                        )
+                    );
+                }
+                SyncRes::Unchanged(slug) => {
+                    synced_mods.insert(slug.clone());
+                    info!("{}", cformat!("<y>Unchanged</> {}", slug));
+                }
+                _ => (),
+            },
+            Err(err) => {
+                info!("{}", cformat!("<r>Failed</> {}", err));
+            }
+        }
+    }
+
+    // Then, download mods not existed
+    info!("downloading other mods...");
+    let mut stream = stream::iter(config.get_mods().into_iter().filter(|value| {
+        if let Mod::Modrinth(modrinth_mod) = value {
+            !synced_mods.contains(&modrinth_mod.slug)
+        } else {
+            false
+        }
+    }))
+    .map(|modrinth_mod| async {
+        match modrinth_mod {
+            Mod::Modrinth(modrinth_mod) => {
+                download_modrinth_mod(modrinth_mod.clone(), &current_dir, config)
+                    .await
+                    .context(format!(
+                        "download mod {} = {}",
+                        modrinth_mod.slug, modrinth_mod.version
+                    ))
+            }
+            _ => unreachable!(),
+        }
+    })
+    .buffer_unordered(5);
+
+    while let Some(res) = stream.next().await {
+        match res {
+            Ok(res) => {
+                info!(
+                    "{}",
+                    cformat!("<g>Downloaded</> {} = {}", res.slug, res.version)
+                );
+            }
+            Err(err) => {
+                info!("{}", cformat!("<r>Failed</> {}", err));
+            }
+        }
+    }
+    info!("done!");
 }
+
+/// The `update` command
+#[tokio::main]
+pub async fn update(current_dir: impl AsRef<Path>, config: &mut LocalModsConfig) {
+    init_logger();
+
+    let current_dir = current_dir.as_ref();
+
+    let _config = Arc::new(config.clone());
+    let mut stream = stream::iter(get_jar_files(current_dir))
+        .map(|file| {
+            let filename = file.file_name();
+            let filename = filename.into_string().unwrap();
+            let _config = _config.clone();
+            async move {
+                update_mod(file, _config, current_dir)
+                    .await
+                    .context(format!("update mod {}", filename))
+            }
+        })
+        .buffer_unordered(5);
+
+    while let Some(res) = stream.next().await {
+        match res {
+            Ok(res) => match res {
+                UpdateRes::Updated(slug, version) => {
+                    config.insert_mod(Mod::Modrinth(ModrinthMod {
+                        slug: slug.clone(),
+                        version: version.clone(),
+                    }));
+                    config.save().unwrap();
+                    info!("{}", cformat!("<g>Updated</> {} = {}", slug, version));
+                }
+                UpdateRes::Unchanged(slug, version) => {
+                    info!("{}", cformat!("<y>Unchanged</> {} = {}", slug, version));
+                }
+                UpdateRes::Skipped => (),
+            },
+            Err(err) => {
+                info!("{}", cformat!("<r>Failed</> {err}"));
+            }
+        }
+    }
+
+    info!("done!")
+}
+
+/// The `add` command
+#[tokio::main]
+pub async fn add(slugs: Vec<String>, current_dir: impl AsRef<Path>, config: &mut LocalModsConfig) {
+    init_logger();
+
+    let current_dir = current_dir.as_ref();
+
+    let slugs: Vec<String> = slugs
+        .into_iter()
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+
+    let _config = Arc::new(config.clone());
+    let mut stream = stream::iter(slugs)
+        .map(|slug| {
+            let slug = slug.clone();
+            async {
+                let _slug = slug.clone();
+                add_mod(slug, _config.clone(), current_dir)
+                    .await
+                    .context(format!("add mod {}", _slug))
+            }
+        })
+        .buffer_unordered(5);
+
+    while let Some(res) = stream.next().await {
+        match res {
+            Ok(res) => match res {
+                AddRes::Added(slug, version) => {
+                    config.insert_mod(Mod::Modrinth(ModrinthMod {
+                        slug: slug.clone(),
+                        version: version.clone(),
+                    }));
+                    config.save().unwrap();
+                    info!("{}", cformat!("<g>Added</> {} = {}", slug, version));
+                }
+                AddRes::AlreadyExist(slug, version) => {
+                    config.insert_mod(Mod::Modrinth(ModrinthMod {
+                        slug: slug.clone(),
+                        version: version.clone(),
+                    }));
+                    config.save().unwrap();
+                    info!("{}", cformat!("<y>Already Exist</> {} = {}", slug, version));
+                }
+            },
+            Err(err) => {
+                info!("{}", cformat!("<r>Failed</> {err}"));
+            }
+        }
+    }
+    info!("done!")
+}
+
+// MARK: Inner
 
 /// Download a modrinth mod
 ///
@@ -97,12 +292,8 @@ async fn download_modrinth_mod(
     async {
         let span = Span::current();
 
-        let loaders = if let Loader::Quilt = config.loader {
-            vec![Loader::Quilt, Loader::Fabric]
-        } else {
-            vec![config.loader]
-        };
         let mut game_version = config.version.clone();
+        let loaders = config.loader.to_compatible_loaders();
 
         span.pb_set_message("fetching project versions...");
         let mut version = api::modrinth::get_project_versions(
@@ -245,96 +436,6 @@ async fn sync_file(
     .await
 }
 
-#[tokio::main]
-pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &LocalModsConfig) {
-    init_logger();
-
-    let current_dir = current_dir.as_ref();
-
-    let mut synced_mods = HashSet::<String>::new();
-
-    // First, use [`sync_file`] to sync all existed mod files
-    info!("checking existed mods...");
-    let jar_files = get_jar_files(current_dir);
-    let mut stream = stream::iter(jar_files)
-        .map(|entry| async {
-            let filename = entry.file_name();
-            let filename = filename.to_str().unwrap();
-
-            sync_file(entry, config, &current_dir)
-                .await
-                .context(format!("sync file {}", filename))
-        })
-        .buffer_unordered(5);
-
-    while let Some(res) = stream.next().await {
-        match res {
-            Ok(res) => match res {
-                SyncRes::Downloaded(slug, version) => {
-                    synced_mods.insert(slug.clone());
-                    info!("{}", cformat!("<g>Updated</> {} to {}", slug, version));
-                }
-                SyncRes::Removed(path) => {
-                    info!(
-                        "{}",
-                        cformat!(
-                            "<r>Removed</> {}",
-                            path.file_name().unwrap().to_str().unwrap()
-                        )
-                    );
-                }
-                SyncRes::Unchanged(slug) => {
-                    synced_mods.insert(slug.clone());
-                    info!("{}", cformat!("<y>Unchanged</> {}", slug));
-                }
-                _ => (),
-            },
-            Err(err) => {
-                info!("{}", cformat!("<r>Failed</> {}", err));
-            }
-        }
-    }
-
-    // Then, download mods not existed
-    info!("downloading other mods...");
-    let mut stream = stream::iter(config.get_mods().into_iter().filter(|value| {
-        if let Mod::Modrinth(modrinth_mod) = value {
-            !synced_mods.contains(&modrinth_mod.slug)
-        } else {
-            false
-        }
-    }))
-    .map(|modrinth_mod| async {
-        match modrinth_mod {
-            Mod::Modrinth(modrinth_mod) => {
-                download_modrinth_mod(modrinth_mod.clone(), &current_dir, config)
-                    .await
-                    .context(format!(
-                        "download mod {} = {}",
-                        modrinth_mod.slug, modrinth_mod.version
-                    ))
-            }
-            _ => unreachable!(),
-        }
-    })
-    .buffer_unordered(5);
-
-    while let Some(res) = stream.next().await {
-        match res {
-            Ok(res) => {
-                info!(
-                    "{}",
-                    cformat!("<g>Downloaded</> {} = {}", res.slug, res.version)
-                );
-            }
-            Err(err) => {
-                info!("{}", cformat!("<r>Failed</> {}", err));
-            }
-        }
-    }
-    info!("done!");
-}
-
 enum UpdateRes {
     Skipped,
     Updated(String, String),
@@ -378,11 +479,7 @@ async fn update_mod(
         span.pb_set_message("fetching project...");
         let project = api::modrinth::get_project(cur_version.project_id).await?;
 
-        let loaders = if let Loader::Quilt = config.loader {
-            vec![Loader::Quilt, Loader::Fabric]
-        } else {
-            vec![config.loader]
-        };
+        let loaders = config.loader.to_compatible_loaders();
         let mut game_version = config.version.clone();
 
         span.pb_set_message("fetching latest version...");
@@ -427,51 +524,6 @@ async fn update_mod(
     .await
 }
 
-#[tokio::main]
-pub async fn update(current_dir: impl AsRef<Path>, config: &mut LocalModsConfig) {
-    init_logger();
-
-    let current_dir = current_dir.as_ref();
-
-    let _config = Arc::new(config.clone());
-    let mut stream = stream::iter(get_jar_files(current_dir))
-        .map(|file| {
-            let filename = file.file_name();
-            let filename = filename.into_string().unwrap();
-            let _config = _config.clone();
-            async move {
-                update_mod(file, _config, current_dir)
-                    .await
-                    .context(format!("update mod {}", filename))
-            }
-        })
-        .buffer_unordered(5);
-
-    while let Some(res) = stream.next().await {
-        match res {
-            Ok(res) => match res {
-                UpdateRes::Updated(slug, version) => {
-                    config.insert_mod(Mod::Modrinth(ModrinthMod {
-                        slug: slug.clone(),
-                        version: version.clone(),
-                    }));
-                    config.save().unwrap();
-                    info!("{}", cformat!("<g>Updated</> {} = {}", slug, version));
-                }
-                UpdateRes::Unchanged(slug, version) => {
-                    info!("{}", cformat!("<y>Unchanged</> {} = {}", slug, version));
-                }
-                UpdateRes::Skipped => (),
-            },
-            Err(err) => {
-                info!("{}", cformat!("<r>Failed</> {err}"));
-            }
-        }
-    }
-
-    info!("done!")
-}
-
 enum AddRes {
     Added(String, String),
     AlreadyExist(String, String),
@@ -500,11 +552,7 @@ async fn add_mod(
             }
         }
 
-        let loaders = if let Loader::Quilt = config.loader {
-            vec![Loader::Quilt, Loader::Fabric]
-        } else {
-            vec![config.loader]
-        };
+        let loaders = config.loader.to_compatible_loaders();
         let mut game_version = config.version.clone();
 
         let mut version =
@@ -526,59 +574,6 @@ async fn add_mod(
     }
     .instrument(span)
     .await
-}
-
-#[tokio::main]
-pub async fn add(slugs: Vec<String>, current_dir: impl AsRef<Path>, config: &mut LocalModsConfig) {
-    init_logger();
-
-    let current_dir = current_dir.as_ref();
-
-    let slugs: Vec<String> = slugs
-        .into_iter()
-        .collect::<HashSet<_>>()
-        .into_iter()
-        .collect();
-
-    let _config = Arc::new(config.clone());
-    let mut stream = stream::iter(slugs)
-        .map(|slug| {
-            let slug = slug.clone();
-            async {
-                let _slug = slug.clone();
-                add_mod(slug, _config.clone(), current_dir)
-                    .await
-                    .context(format!("add mod {}", _slug))
-            }
-        })
-        .buffer_unordered(5);
-
-    while let Some(res) = stream.next().await {
-        match res {
-            Ok(res) => match res {
-                AddRes::Added(slug, version) => {
-                    config.insert_mod(Mod::Modrinth(ModrinthMod {
-                        slug: slug.clone(),
-                        version: version.clone(),
-                    }));
-                    config.save().unwrap();
-                    info!("{}", cformat!("<g>Added</> {} = {}", slug, version));
-                }
-                AddRes::AlreadyExist(slug, version) => {
-                    config.insert_mod(Mod::Modrinth(ModrinthMod {
-                        slug: slug.clone(),
-                        version: version.clone(),
-                    }));
-                    config.save().unwrap();
-                    info!("{}", cformat!("<y>Already Exist</> {} = {}", slug, version));
-                }
-            },
-            Err(err) => {
-                info!("{}", cformat!("<r>Failed</> {err}"));
-            }
-        }
-    }
-    info!("done!")
 }
 
 fn get_jar_files(dir: &Path) -> Vec<DirEntry> {
