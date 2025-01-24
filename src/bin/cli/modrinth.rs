@@ -123,7 +123,7 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &LocalModsConfig) {
                 _ => (),
             },
             Err(err) => {
-                info!("{}", cformat!("<r>Failed</> {}", err));
+                info!("{}", cformat!("<r>Failed</> {:?}", err));
             }
         }
     }
@@ -139,14 +139,25 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &LocalModsConfig) {
     }))
     .map(|modrinth_mod| async {
         match modrinth_mod {
-            Mod::Modrinth(modrinth_mod) => {
-                download_modrinth_mod(modrinth_mod.clone(), &current_dir, config)
-                    .await
-                    .context(format!(
-                        "download mod {} = {}",
-                        modrinth_mod.slug, modrinth_mod.version
-                    ))
-            }
+            Mod::Modrinth(modrinth_mod) => download_modrinth_mod(
+                modrinth_mod.clone(),
+                &current_dir,
+                Some(config.version.clone()),
+                config.loader,
+            )
+            .await
+            .or(
+                download_modrinth_mod(modrinth_mod.clone(), &current_dir, None, config.loader)
+                    .await,
+            )
+            .map_err(|err| {
+                anyhow::anyhow!(format!(
+                    "download mod {} = {} ({})",
+                    modrinth_mod.slug,
+                    modrinth_mod.version,
+                    err.root_cause()
+                ))
+            }),
             _ => unreachable!(),
         }
     })
@@ -276,7 +287,9 @@ pub async fn add(slugs: Vec<String>, current_dir: impl AsRef<Path>, config: &mut
 async fn download_modrinth_mod(
     modrinth_mod: ModrinthMod,
     dir: impl AsRef<Path>,
-    config: &LocalModsConfig,
+    mut game_version: Option<String>,
+    loader: Loader,
+    // config: &LocalModsConfig,
 ) -> Result<ModrinthMod, anyhow::Error> {
     let span = info_span!(
         "downloading",
@@ -292,18 +305,20 @@ async fn download_modrinth_mod(
     async {
         let span = Span::current();
 
-        let mut game_version = config.version.clone();
-        let loaders = config.loader.to_compatible_loaders();
+        // let mut game_version = config.version.clone();
+        let loaders = loader.to_compatible_loaders();
 
         span.pb_set_message("fetching project versions...");
         let mut version = api::modrinth::get_project_versions(
             modrinth_mod.slug.clone(),
             Some(&loaders),
-            Some(game_version.clone()),
+            game_version.clone(),
         )
         .await?;
-        if version.is_empty() {
-            game_version = get_parent_version(game_version);
+        if version.is_empty() && game_version.is_some() {
+            game_version.iter_mut().for_each(|v| {
+                *v = get_parent_version(v.clone());
+            });
 
             span.pb_set_message(
                 "cannot match exact game version, refetching with parent game version...",
@@ -311,13 +326,13 @@ async fn download_modrinth_mod(
             version = api::modrinth::get_project_versions(
                 modrinth_mod.slug.clone(),
                 Some(&loaders),
-                Some(game_version.clone()),
+                game_version.clone(),
             )
             .await?;
         }
         if version.is_empty() {
             anyhow::bail!(
-                "cannot find any versions for {} under {}",
+                "cannot find any versions for {} under {:?}",
                 modrinth_mod.slug,
                 game_version
             );
@@ -328,10 +343,12 @@ async fn download_modrinth_mod(
             .find(|v| {
                 v.version_number == modrinth_mod.version
                     && loaders.iter().any(|l| v.loaders.contains(l))
-                    && v.game_versions.contains(&game_version)
+                    && game_version
+                        .as_ref()
+                        .map_or(true, |game_version| v.game_versions.contains(game_version))
             })
             .ok_or(anyhow::anyhow!(
-                "cannot find version {} for {} under {}",
+                "cannot find version {} for {} under {:?}",
                 modrinth_mod.version,
                 modrinth_mod.slug,
                 game_version
@@ -421,7 +438,20 @@ async fn sync_file(
                 if modrinth_mod.version != version.version_number {
                     span.pb_set_message("version not match, redownloading...");
                     remove_file(&path)?;
-                    download_modrinth_mod(modrinth_mod, &current_dir, config).await?;
+                    download_modrinth_mod(
+                        modrinth_mod.clone(),
+                        &current_dir,
+                        Some(config.version.clone()),
+                        config.loader,
+                    )
+                    .await
+                    .or(download_modrinth_mod(
+                        modrinth_mod,
+                        &current_dir,
+                        None,
+                        config.loader,
+                    )
+                    .await)?;
                     return Ok(SyncRes::Downloaded(project.slug, version.version_number));
                 }
             }
@@ -578,7 +608,7 @@ async fn add_mod(
 
 fn get_jar_files(dir: &Path) -> Vec<DirEntry> {
     if !dir.exists() {
-        return vec![]
+        return vec![];
     }
     fs::read_dir(dir)
         .unwrap()
