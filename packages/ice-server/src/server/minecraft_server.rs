@@ -6,7 +6,7 @@ use std::{
 
 use super::regex::{done_regex, player_regex};
 use ice_util::minecraft::rtext::{build_component, Component};
-use log::{error, info};
+use tracing::{error, info};
 
 use crate::config::Config;
 
@@ -22,7 +22,9 @@ impl MinecraftServer {
         
         let mut command = Command::new("java");
         let mut args = config.jvm_options.split(' ').collect::<Vec<&str>>();
+        args.retain(|s| !s.is_empty());
         args.extend(["-jar", config.loader.launch_filename_str(), "--nogui"]);
+        info!("Running command: java {}", args.join(" "));
 
         command.current_dir("./server");
         command.args(args);

@@ -6,7 +6,7 @@ use std::{
 use ice_api_tool::mojang::get_latest_version;
 use ice_core::Loader;
 use ice_server::{config::Config, Core};
-use tracing::{info, Level};
+use tracing::{info, error, Level};
 use tracing_subscriber::FmtSubscriber;
 
 #[tokio::main]
@@ -66,7 +66,7 @@ pub async fn run<P: AsRef<Path>>(current_dir: P) {
 
     let config = Config::load(current_dir.join("Ice.toml")).unwrap();
     if !config.loader.installed(current_dir) {
-        println!("server not installed, use `ice server install` to install server");
+        error!("server not installed, use `ice server install` to install server");
         return;
     }
 
