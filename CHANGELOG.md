@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.38](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.37..0.1.0-alpha.38) - 2025-06-27
+
+### <!-- 0 -->🎈 Features
+
+
+- Now mod sync command will fallback to any game version - ([9e41985](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/9e41985affdd773f4ad11796d710b8cca9aa9012))
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- Jvm args has incorrect order - ([0930c36](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/0930c366a28f8ad472ab9da64b1d39cbfa3d1ac4))
+
 ## [0.1.0-alpha.37](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.36..0.1.0-alpha.37) - 2025-01-24
 
 ### <!-- 0 -->🎈 Features
