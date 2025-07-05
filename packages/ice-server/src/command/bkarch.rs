@@ -54,7 +54,15 @@ pub fn get_archive_list() -> Vec<PathBuf> {
         entries.sort_by_key(|entry| entry.metadata().unwrap().created().unwrap());
         entries
             .into_iter()
-            .map(|entry| entry.path())
+            .filter_map(|entry| {
+                entry.file_type().ok().and_then(|file_type| {
+                    if file_type.is_dir() {
+                        Some(entry.path())
+                    } else {
+                        None
+                    }
+                })
+            })
             .collect::<Vec<PathBuf>>()
     } else {
         Vec::new()
