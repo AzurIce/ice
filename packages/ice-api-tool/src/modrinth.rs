@@ -45,6 +45,17 @@ pub async fn get_project_versions<S: AsRef<str>>(
     Ok(versions)
 }
 
+/// Get `Version` from id
+pub async fn get_version<S: AsRef<str>>(id: S) -> Result<Version, anyhow::Error> {
+    let id = id.as_ref();
+    let url = format!("{HOST}/version/{id}");
+
+    let url = reqwest::Url::parse(&url)?;
+    let res = reqwest::get(url).await?;
+    let version = res.json::<Version>().await?;
+    Ok(version)
+}
+
 // Get `Version` from the hash of the file
 pub async fn get_version_from_hash<H: AsRef<str>>(
     hash: H,
@@ -173,6 +184,25 @@ pub mod types {
         Bungeecord,
         Datapack,
         PurPur,
+        Ornithe,
+        Babric,
+        #[serde(rename(serialize = "bta-babric", deserialize = "bta-babric"))]
+        BtaBabric,
+        Canvas,
+        Iris,
+        #[serde(rename(serialize = "java-agent", deserialize = "java-agent"))]
+        JavaAgent,
+        #[serde(rename(serialize = "legacy-fabric", deserialize = "legacy-fabric"))]
+        LegacyFabric,
+        Minecraft,
+        Modloader,
+        Nilloader,
+        Optifine,
+        Vanilla,
+        Velocity,
+        Waterfall,
+        // #[serde(untagged)]
+        // Unknown(String)
     }
 
     impl Display for Loader {
@@ -192,6 +222,21 @@ pub mod types {
                 Self::Bungeecord => "bungeecord",
                 Self::Datapack => "datapack",
                 Self::PurPur => "purpur",
+                Self::Ornithe => "ornithe",
+                Self::Babric => "babric",
+                Self::BtaBabric => "bta-babric",
+                Self::Canvas => "canvas",
+                Self::Iris => "iris",
+                Self::JavaAgent => "java-agent",
+                Self::LegacyFabric => "legacy-fabric",
+                Self::Minecraft => "minecraft",
+                Self::Modloader => "modloader",
+                Self::Nilloader => "nilloader",
+                Self::Optifine => "optifine",
+                Self::Vanilla => "vanilla",
+                Self::Velocity => "velocity",
+                Self::Waterfall => "waterfall",
+                // Self::Unknown(tag) => tag,
             })
         }
     }
@@ -239,6 +284,8 @@ pub mod types {
 
 #[cfg(test)]
 mod test {
+    use serde::Deserialize;
+
     use super::types::*;
     use super::*;
     use super::{get_project_versions, HashMethod};
@@ -267,6 +314,29 @@ mod test {
     }
 
     #[tokio::test]
+    async fn test_loader() {
+        let res = reqwest::get("https://api.modrinth.com/v2/tag/loader")
+            .await
+            .unwrap();
+        #[derive(Serialize, Deserialize)]
+        struct LoaderTag {
+            icon: String,
+            name: Loader,
+            supported_project_types: Vec<String>,
+        }
+        let _loader_tags = res.json::<Vec<LoaderTag>>().await.unwrap();
+        // let loaders = _loader_tags.iter().map(|tag| tag.name.clone());
+        // let unknown_loaders = loaders.filter_map(|loader| if let Loader::Unknown(loader) = loader {
+        //     Some(loader)
+        // } else {
+        //     None
+        // }).collect::<Vec<_>>();
+        // if !unknown_loaders.is_empty() {
+        //     panic!("has {} unknown_loaders: {:?}", unknown_loaders.len(), unknown_loaders)
+        // }
+    }
+
+    #[tokio::test]
     async fn test_get_project_versions() {
         let versions = get_project_versions(
             "terralith",
@@ -288,6 +358,12 @@ mod test {
                 .await
                 .unwrap();
         assert_eq!(version_sha1, version_sha512);
+    }
+
+    #[tokio::test]
+    async fn test_get_latest_version_from_slug() {
+        let version = get_latest_version_from_slug("minihud", vec![Loader::Fabric], "1.21.6").await;
+        println!("{version:?}");
     }
 
     #[tokio::test]

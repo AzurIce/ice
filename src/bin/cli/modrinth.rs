@@ -6,24 +6,19 @@ use std::{
 };
 
 use anyhow::Context;
-use color_print::{cformat, cprintln};
+use color_print::cformat;
 use futures::{stream, StreamExt};
 use ice::{
     config::LocalModsConfig,
     core::{Mod, ModrinthMod},
-    // log::logger,
 };
 use ice_api_tool::{
     self as api,
-    modrinth::{
-        get_latest_version_from_hash, get_latest_version_from_slug, types::Version,
-        utils::download_version_file, HashMethod,
-    },
+    modrinth::{get_latest_version_from_slug, utils::download_version_file, HashMethod},
 };
 use ice_core::Loader;
-use ice_util::{fs::get_sha1_hash, get_parent_version};
+use ice_util::fs::get_sha1_hash;
 use indicatif::ProgressStyle;
-use tokio::task::JoinSet;
 use tracing::{info, info_span, Instrument, Span};
 use tracing_indicatif::{span_ext::IndicatifSpanExt, IndicatifLayer};
 use tracing_subscriber::EnvFilter;
@@ -139,25 +134,17 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &LocalModsConfig) {
     }))
     .map(|modrinth_mod| async {
         match modrinth_mod {
-            Mod::Modrinth(modrinth_mod) => download_modrinth_mod(
-                modrinth_mod.clone(),
-                &current_dir,
-                Some(config.version.clone()),
-                config.loader,
-            )
-            .await
-            .or(
-                download_modrinth_mod(modrinth_mod.clone(), &current_dir, None, config.loader)
-                    .await,
-            )
-            .map_err(|err| {
-                anyhow::anyhow!(format!(
-                    "download mod {} = {} ({})",
-                    modrinth_mod.slug,
-                    modrinth_mod.version,
-                    err.root_cause()
-                ))
-            }),
+            Mod::Modrinth(modrinth_mod) => download_modrinth_mod(&modrinth_mod, &current_dir)
+                .await
+                .map_err(|err| {
+                    anyhow::anyhow!(format!(
+                        "download mod {} = {} ({})",
+                        modrinth_mod.slug,
+                        modrinth_mod.version_id_number,
+                        err.root_cause()
+                    ))
+                })
+                .map(|_| modrinth_mod),
             _ => unreachable!(),
         }
     })
@@ -168,7 +155,7 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &LocalModsConfig) {
             Ok(res) => {
                 info!(
                     "{}",
-                    cformat!("<g>Downloaded</> {} = {}", res.slug, res.version)
+                    cformat!("<g>Downloaded</> {} = {}", res.slug, res.version_id_number)
                 );
             }
             Err(err) => {
@@ -203,16 +190,35 @@ pub async fn update(current_dir: impl AsRef<Path>, config: &mut LocalModsConfig)
     while let Some(res) = stream.next().await {
         match res {
             Ok(res) => match res {
-                UpdateRes::Updated(slug, version) => {
+                UpdateRes::Updated {
+                    slug,
+                    version_id,
+                    version_number,
+                } => {
                     config.insert_mod(Mod::Modrinth(ModrinthMod {
                         slug: slug.clone(),
-                        version: version.clone(),
+                        version_id_number: format!("{}#{}", version_id, version_number),
                     }));
                     config.save().unwrap();
-                    info!("{}", cformat!("<g>Updated</> {} = {}", slug, version));
+                    info!(
+                        "{}",
+                        cformat!("<g>Updated</> {} = {}#{}", slug, version_id, version_number)
+                    );
                 }
-                UpdateRes::Unchanged(slug, version) => {
-                    info!("{}", cformat!("<y>Unchanged</> {} = {}", slug, version));
+                UpdateRes::Unchanged {
+                    slug,
+                    version_id,
+                    version_number,
+                } => {
+                    info!(
+                        "{}",
+                        cformat!(
+                            "<y>Unchanged</> {} = {}#{}",
+                            slug,
+                            version_id,
+                            version_number
+                        )
+                    );
                 }
                 UpdateRes::Skipped => (),
             },
@@ -254,21 +260,35 @@ pub async fn add(slugs: Vec<String>, current_dir: impl AsRef<Path>, config: &mut
     while let Some(res) = stream.next().await {
         match res {
             Ok(res) => match res {
-                AddRes::Added(slug, version) => {
+                AddRes::Added {
+                    slug,
+                    version_id,
+                    version_number,
+                } => {
                     config.insert_mod(Mod::Modrinth(ModrinthMod {
                         slug: slug.clone(),
-                        version: version.clone(),
+                        version_id_number: format!("{}#{}", version_id, version_number),
                     }));
                     config.save().unwrap();
-                    info!("{}", cformat!("<g>Added</> {} = {}", slug, version));
+                    info!(
+                        "{}",
+                        cformat!("<g>Added</> {} = {}#{}", slug, version_id, version_number)
+                    );
                 }
-                AddRes::AlreadyExist(slug, version) => {
-                    config.insert_mod(Mod::Modrinth(ModrinthMod {
-                        slug: slug.clone(),
-                        version: version.clone(),
-                    }));
-                    config.save().unwrap();
-                    info!("{}", cformat!("<y>Already Exist</> {} = {}", slug, version));
+                AddRes::AlreadyExist {
+                    slug,
+                    version_id,
+                    version_number,
+                } => {
+                    info!(
+                        "{}",
+                        cformat!(
+                            "<y>Already Exist</> {} = {}#{}",
+                            slug,
+                            version_id,
+                            version_number
+                        )
+                    );
                 }
             },
             Err(err) => {
@@ -285,16 +305,13 @@ pub async fn add(slugs: Vec<String>, current_dir: impl AsRef<Path>, config: &mut
 ///
 /// This function creates a span with spinner
 async fn download_modrinth_mod(
-    modrinth_mod: ModrinthMod,
+    modrinth_mod: &ModrinthMod,
     dir: impl AsRef<Path>,
-    mut game_version: Option<String>,
-    loader: Loader,
-    // config: &LocalModsConfig,
-) -> Result<ModrinthMod, anyhow::Error> {
+) -> Result<(), anyhow::Error> {
     let span = info_span!(
         "downloading",
         slug = modrinth_mod.slug,
-        version = modrinth_mod.version
+        version_id_number = modrinth_mod.version_id_number
     );
     span.pb_set_style(
         &ProgressStyle::with_template(
@@ -305,60 +322,14 @@ async fn download_modrinth_mod(
     async {
         let span = Span::current();
 
-        // let mut game_version = config.version.clone();
-        let loaders = loader.to_compatible_loaders();
-
-        span.pb_set_message("fetching project versions...");
-        let mut version = api::modrinth::get_project_versions(
-            modrinth_mod.slug.clone(),
-            Some(&loaders),
-            game_version.clone(),
-        )
-        .await?;
-        if version.is_empty() && game_version.is_some() {
-            game_version.iter_mut().for_each(|v| {
-                *v = get_parent_version(v.clone());
-            });
-
-            span.pb_set_message(
-                "cannot match exact game version, refetching with parent game version...",
-            );
-            version = api::modrinth::get_project_versions(
-                modrinth_mod.slug.clone(),
-                Some(&loaders),
-                game_version.clone(),
-            )
-            .await?;
-        }
-        if version.is_empty() {
-            anyhow::bail!(
-                "cannot find any versions for {} under {:?}",
-                modrinth_mod.slug,
-                game_version
-            );
-        }
-
-        let target_version = version
-            .iter()
-            .find(|v| {
-                v.version_number == modrinth_mod.version
-                    && loaders.iter().any(|l| v.loaders.contains(l))
-                    && game_version
-                        .as_ref()
-                        .map_or(true, |game_version| v.game_versions.contains(game_version))
-            })
-            .ok_or(anyhow::anyhow!(
-                "cannot find version {} for {} under {:?}",
-                modrinth_mod.version,
-                modrinth_mod.slug,
-                game_version
-            ))?;
+        span.pb_set_message("fetching project version...");
+        let version = api::modrinth::get_version(modrinth_mod.version_id()).await?;
 
         span.pb_set_message("downloading...");
-        let version_file = target_version.get_primary_file();
+        let version_file = version.get_primary_file();
         download_version_file(version_file, dir).await?;
 
-        Ok(modrinth_mod)
+        Ok(())
     }
     .instrument(span)
     .await
@@ -435,23 +406,10 @@ async fn sync_file(
 
         if let Some(value) = config.get_mod(&project.slug) {
             if let Mod::Modrinth(modrinth_mod) = value {
-                if modrinth_mod.version != version.version_number {
+                if modrinth_mod.version_id() != version.id {
                     span.pb_set_message("version not match, redownloading...");
                     remove_file(&path)?;
-                    download_modrinth_mod(
-                        modrinth_mod.clone(),
-                        &current_dir,
-                        Some(config.version.clone()),
-                        config.loader,
-                    )
-                    .await
-                    .or(download_modrinth_mod(
-                        modrinth_mod,
-                        &current_dir,
-                        None,
-                        config.loader,
-                    )
-                    .await)?;
+                    download_modrinth_mod(&modrinth_mod, &current_dir).await?;
                     return Ok(SyncRes::Downloaded(project.slug, version.version_number));
                 }
             }
@@ -468,8 +426,16 @@ async fn sync_file(
 
 enum UpdateRes {
     Skipped,
-    Updated(String, String),
-    Unchanged(String, String),
+    Updated {
+        slug: String,
+        version_id: String,
+        version_number: String,
+    },
+    Unchanged {
+        slug: String,
+        version_id: String,
+        version_number: String,
+    },
 }
 
 async fn update_mod(
@@ -510,37 +476,23 @@ async fn update_mod(
         let project = api::modrinth::get_project(cur_version.project_id).await?;
 
         let loaders = config.loader.to_compatible_loaders();
-        let mut game_version = config.version.clone();
+        let game_version = config.version.clone();
 
         span.pb_set_message("fetching latest version...");
-        let mut version = api::modrinth::get_latest_version_from_hash(
+        let version = api::modrinth::get_latest_version_from_hash(
             &hash,
             HashMethod::Sha1,
             &loaders,
             game_version.clone(),
         )
-        .await;
-        if version.is_err() {
-            game_version = get_parent_version(game_version);
-            span.pb_set_message(&format!(
-                "failed to get latest version of {} under {}, trying to get it under {game_version}",
-                project.slug,config.version
-            ));
-            version = api::modrinth::get_latest_version_from_hash(
-                &hash,
-                HashMethod::Sha1,
-                &loaders,
-                game_version,
-            )
-            .await;
-        }
-        let version = version?;
+        .await?;
 
-        if version.version_number == cur_version.version_number {
-            return Ok(UpdateRes::Unchanged(
-                project.slug,
-                cur_version.version_number,
-            ));
+        if version.id == cur_version.id {
+            return Ok(UpdateRes::Unchanged {
+                slug: project.slug,
+                version_id: cur_version.id,
+                version_number: cur_version.version_number,
+            });
         }
 
         span.pb_set_message("downloading...");
@@ -548,15 +500,36 @@ async fn update_mod(
         download_version_file(version_file, current_dir).await?;
         span.pb_set_message("removing old file...");
         remove_file(path)?;
-        Ok(UpdateRes::Updated(project.slug, version.version_number))
+        Ok(UpdateRes::Updated {
+            slug: project.slug,
+            version_id: version.id,
+            version_number: version.version_number,
+        })
     }
     .instrument(span)
     .await
 }
 
 enum AddRes {
-    Added(String, String),
-    AlreadyExist(String, String),
+    Added {
+        slug: String,
+        version_id: String,
+        version_number: String,
+    },
+    AlreadyExist {
+        slug: String,
+        version_id: String,
+        version_number: String,
+    },
+}
+
+fn ice_core_loader_to_modrinth_loader(
+    value: ice_core::Loader,
+) -> ice_api_tool::modrinth::types::Loader {
+    match value {
+        ice_core::Loader::Fabric => ice_api_tool::modrinth::types::Loader::Fabric,
+        ice_core::Loader::Quilt => ice_api_tool::modrinth::types::Loader::Quilt,
+    }
 }
 
 async fn add_mod(
@@ -578,29 +551,29 @@ async fn add_mod(
 
         if let Some(value) = config.get_mod(&slug) {
             if let Mod::Modrinth(modrinth_mod) = value {
-                return Ok(AddRes::AlreadyExist(slug.clone(), modrinth_mod.version));
+                return Ok(AddRes::AlreadyExist {
+                    slug: modrinth_mod.slug.clone(),
+                    version_number: modrinth_mod.version_number().to_string(),
+                    version_id: modrinth_mod.version_id().to_string(),
+                });
             }
         }
 
-        let loaders = config.loader.to_compatible_loaders();
-        let mut game_version = config.version.clone();
+        let game_version = config.version.clone();
+        let loader = ice_core_loader_to_modrinth_loader(config.loader);
 
-        let mut version =
-            get_latest_version_from_slug(&slug, loaders.clone(), game_version.clone()).await;
-        if version.is_err() {
-            game_version = get_parent_version(game_version);
-            span.pb_set_message(&format!(
-                "failed to get latest version of {slug} under {}, trying to get it under {game_version}",
-                config.version
-            ));
-            version = get_latest_version_from_slug(&slug, loaders, game_version).await;
-        }
-        let version = version?;
+        span.pb_set_message("fetching latest version...");
+        let version =
+            get_latest_version_from_slug(&slug, vec![loader], game_version.clone()).await?;
 
         span.pb_set_message("downloading...");
         let version_file = version.get_primary_file();
         download_version_file(version_file, current_dir).await?;
-        Ok(AddRes::Added(slug, version.version_number))
+        Ok(AddRes::Added {
+            slug,
+            version_number: version.version_number,
+            version_id: version.id,
+        })
     }
     .instrument(span)
     .await
@@ -624,26 +597,26 @@ fn get_jar_files(dir: &Path) -> Vec<DirEntry> {
         .collect::<Vec<DirEntry>>()
 }
 
-async fn get_modrinth_files(dir: &Path) -> Vec<(DirEntry, String, Version)> {
-    //? Get modrinth files
-    let jar_files = get_jar_files(dir);
-    let mut join_set = JoinSet::new();
-    for f in jar_files {
-        join_set.spawn(async {
-            let path = f.path();
-            let hash = tokio::task::spawn_blocking(|| get_sha1_hash(path).unwrap())
-                .await
-                .unwrap();
-            let version = api::modrinth::get_version_from_hash(&hash, HashMethod::Sha1).await;
-            version.map(|v| (f, hash, v)).ok()
-        });
-    }
-    let mut modrinth_files = vec![];
-    while let Some(res) = join_set.join_next().await {
-        let res = res.unwrap();
-        if let Some(res) = res {
-            modrinth_files.push(res)
-        }
-    }
-    modrinth_files
-}
+// async fn get_modrinth_files(dir: &Path) -> Vec<(DirEntry, String, Version)> {
+//     //? Get modrinth files
+//     let jar_files = get_jar_files(dir);
+//     let mut join_set = JoinSet::new();
+//     for f in jar_files {
+//         join_set.spawn(async {
+//             let path = f.path();
+//             let hash = tokio::task::spawn_blocking(|| get_sha1_hash(path).unwrap())
+//                 .await
+//                 .unwrap();
+//             let version = api::modrinth::get_version_from_hash(&hash, HashMethod::Sha1).await;
+//             version.map(|v| (f, hash, v)).ok()
+//         });
+//     }
+//     let mut modrinth_files = vec![];
+//     while let Some(res) = join_set.join_next().await {
+//         let res = res.unwrap();
+//         if let Some(res) = res {
+//             modrinth_files.push(res)
+//         }
+//     }
+//     modrinth_files
+// }

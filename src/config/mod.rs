@@ -30,11 +30,32 @@ pub enum TomlMod {
     Detailed(TomlDetailedMod),
 }
 
+impl From<(String, TomlMod)> for Mod {
+    fn from((slug, value): (String, TomlMod)) -> Self {
+        match value {
+            TomlMod::Simple(version_id_number) => Mod::Modrinth(ModrinthMod {
+                slug,
+                version_id_number,
+            }),
+            TomlMod::Detailed(detailed) => {
+                if let Some(version_id_number) = detailed.version_id_number {
+                    Mod::Modrinth(ModrinthMod {
+                        slug,
+                        version_id_number,
+                    })
+                } else {
+                    Mod::Unknown
+                }
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlDetailedMod {
-    pub version: Option<String>,
-    pub strict_match_game_version: Option<bool>,
+    pub version_id_number: Option<String>,
+    // pub strict_match_game_version: Option<bool>,
     pub url: Option<String>,
 
     #[serde(skip_serializing)]
@@ -53,62 +74,38 @@ pub struct ModsConfig {
 
 impl ModsConfig {
     pub fn new(version: String, loader: Loader) -> Self {
+        let mut document = toml_edit::DocumentMut::new();
+        document["version"] = toml_edit::value(version.clone());
+        document["loader"] = toml_edit::value(loader.to_string());
+        document["mods"] = toml_edit::Item::Table(toml_edit::Table::default());
+
         let config = TomlModsManifest {
             version,
             loader,
             mods: BTreeMap::new(),
             _unused_keys: BTreeMap::new(),
         };
-        let document = toml_edit::DocumentMut::new();
 
         Self { config, document }
     }
 
     pub fn get_mod(&self, key: &str) -> Option<Mod> {
-        self.mods.get(key).and_then(|value| match value {
-            TomlMod::Simple(version) => Some(Mod::Modrinth(ModrinthMod {
-                slug: key.to_string(),
-                version: version.to_string(),
-            })),
-            TomlMod::Detailed(detailed) => {
-                if let Some(version) = &detailed.version {
-                    Some(Mod::Modrinth(ModrinthMod {
-                        slug: key.to_string(),
-                        version: version.to_string(),
-                    }))
-                } else {
-                    Some(Mod::Unknown)
-                }
-            }
-        })
+        self.mods
+            .get(key)
+            .map(|v| (key.to_string(), v.clone()).into())
     }
 
     pub fn get_mods(&self) -> Vec<Mod> {
         self.mods
             .iter()
-            .map(|(k, v)| match v {
-                TomlMod::Simple(version) => Mod::Modrinth(ModrinthMod {
-                    slug: k.to_string(),
-                    version: version.to_string(),
-                }),
-                TomlMod::Detailed(detailed) => {
-                    if let Some(version) = &detailed.version {
-                        Mod::Modrinth(ModrinthMod {
-                            slug: k.to_string(),
-                            version: version.to_string(),
-                        })
-                    } else {
-                        Mod::Unknown
-                    }
-                }
-            })
+            .map(|(k, v)| (k.clone(), v.clone()).into())
             .collect()
     }
 
     pub fn insert_mod(&mut self, value: Mod) {
         match value {
             Mod::Modrinth(modrinth) => {
-                let toml_mod = TomlMod::Simple(modrinth.version.clone());
+                let toml_mod = TomlMod::Simple(modrinth.version_id_number.clone());
                 self.config.mods.insert(modrinth.slug.clone(), toml_mod);
 
                 let document = &mut self.document;
@@ -116,12 +113,12 @@ impl ModsConfig {
                     let decor = item.decor();
                     let prefix = decor.prefix().map(|s| s.as_str().unwrap()).unwrap_or("");
                     let suffix = decor.suffix().map(|s| s.as_str().unwrap()).unwrap_or("");
-                    *item = toml_edit::value(modrinth.version)
+                    *item = toml_edit::value(modrinth.version_id_number)
                         .into_value()
                         .unwrap()
                         .decorated(prefix, suffix);
                 } else {
-                    document["mods"][&modrinth.slug] = toml_edit::value(modrinth.version);
+                    document["mods"][&modrinth.slug] = toml_edit::value(modrinth.version_id_number);
                 }
             }
             _ => {}
@@ -198,8 +195,6 @@ impl LocalModsConfig {
 
 #[cfg(test)]
 mod test {
-    use std::path::Path;
-
     use crate::core::ModrinthMod;
 
     use super::*;
@@ -207,10 +202,14 @@ mod test {
     #[test]
     fn foo() {
         let mut config =
-            LocalModsConfig::load(Path::new(r#"G:\_MCServer\1.20.1 Survival\Ice.toml"#)).unwrap();
+            LocalModsConfig::new("1.21.6".to_string(), Loader::Fabric, "H:/_mc/ice-test");
+        // let config = config.inner;
+        // println!("{:?}", config);
+        // println!("{:?}", config.to_string());
+
         config.insert_mod(Mod::Modrinth(ModrinthMod {
             slug: "ashdajsdhasdk".to_string(),
-            version: "asdhfjkladhsfjkl".to_string(),
+            version_id_number: "asdhfjkladhsfjkl#asdasdasdasdasdasd".to_string(),
         }));
         println!("{:?}", config.to_string())
     }

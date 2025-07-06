@@ -4,7 +4,10 @@ mod server;
 use clap::{Parser, Subcommand};
 use ice::config::LocalModsConfig;
 use ice_core::Loader;
-use std::{env, path::Path};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 use tracing::info;
 
 #[derive(Parser)]
@@ -12,6 +15,9 @@ use tracing::info;
 pub(crate) struct Cli {
     #[command(subcommand)]
     command: Commands,
+
+    #[arg(short, long)]
+    working_dir: Option<PathBuf>,
 }
 
 #[derive(Subcommand)]
@@ -35,6 +41,8 @@ pub enum ModCommands {
     },
     /// Sync mods
     Sync,
+    /// Install mods
+    Install,
     /// Update mods
     Update,
     /// Add mod
@@ -125,7 +133,9 @@ impl ServerCommands {
 
 impl Cli {
     pub fn exec(self) {
-        let current_dir = env::current_dir().expect("failed to get current_dir");
+        let current_dir = self
+            .working_dir
+            .unwrap_or(env::current_dir().expect("failed to get current_dir"));
 
         match self.command {
             Commands::Modrinth(command) => {

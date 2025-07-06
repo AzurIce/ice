@@ -1,5 +1,3 @@
-use crate::config::TomlMod;
-
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum Mod {
@@ -10,20 +8,14 @@ pub enum Mod {
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct ModrinthMod {
     pub slug: String,
-    pub version: String,
+    pub version_id_number: String,
 }
 
-impl From<(String, TomlMod)> for Mod {
-    fn from((slug, value): (String, TomlMod)) -> Self {
-        match value {
-            TomlMod::Simple(version) => Mod::Modrinth(ModrinthMod { slug, version }),
-            TomlMod::Detailed(detailed) => {
-                if let Some(version) = detailed.version {
-                    Mod::Modrinth(ModrinthMod { slug, version })
-                } else {
-                    Mod::Unknown
-                }
-            }
-        }
+impl ModrinthMod {
+    pub fn version_id(&self) -> &str {
+        &self.version_id_number.split("#").next().unwrap()
+    }
+    pub fn version_number(&self) -> &str {
+        &self.version_id_number.split("#").skip(1).next().unwrap()
     }
 }
