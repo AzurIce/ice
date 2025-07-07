@@ -7,7 +7,7 @@ use std::{
 };
 
 use ice_api_tool as api;
-use ice_util::{download_from_url_blocking, get_url_filename};
+use ice_util::{download_from_url, get_url_filename};
 use log::info;
 use serde::{Deserialize, Serialize};
 
@@ -64,7 +64,8 @@ impl Loader {
         let current_dir = current_dir.as_ref();
         let server_dir = current_dir.join("server");
 
-        server_dir.join("server.jar").exists() && server_dir.join(self.launch_filename_str()).exists()
+        server_dir.join("server.jar").exists()
+            && server_dir.join(self.launch_filename_str()).exists()
     }
 
     pub fn install<P: AsRef<Path>, S: AsRef<str>>(
@@ -82,18 +83,21 @@ impl Loader {
         // Download installer
         let ice_dir = current_dir.join(".ice");
         fs::create_dir_all(&ice_dir).unwrap();
-        let url = match self {
-            Loader::Fabric => api::fabric::get_latest_installer_url()?,
-            Loader::Quilt => reqwest::blocking::get(
-                "https://quiltmc.org/api/v1/download-latest-installer/java-universal",
-            )?
-            .url()
-            .as_str()
-            .to_string(),
-        };
+        let url = smol::block_on(async {
+            Ok::<String, Box<dyn Error>>(match self {
+                Loader::Fabric => api::fabric::get_latest_installer_url().await?,
+                Loader::Quilt => reqwest::get(
+                    "https://quiltmc.org/api/v1/download-latest-installer/java-universal",
+                )
+                .await?
+                .url()
+                .as_str()
+                .to_string(),
+            })
+        })?;
         let filename = get_url_filename(url.as_str()).unwrap_or("quilt-installer");
         let installer_path = ice_dir.join(filename);
-        download_from_url_blocking(url.as_str(), &installer_path, |_| {})?;
+        smol::block_on(download_from_url(url.as_str(), &installer_path, |_| {}))?;
 
         // Install
         info!("installing server({self})...");

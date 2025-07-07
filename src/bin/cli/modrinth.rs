@@ -19,7 +19,7 @@ use ice_api_tool::{
 use ice_core::Loader;
 use ice_util::fs::get_sha1_hash;
 use indicatif::ProgressStyle;
-use tracing::{info, info_span, Instrument, Span};
+use tracing::{error, info, info_span, Instrument, Span};
 use tracing_indicatif::{span_ext::IndicatifSpanExt, IndicatifLayer};
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -49,7 +49,6 @@ fn init_logger() {
 /// Initialize a `mods.toml` under `current_dir`
 ///
 /// If `version` is `None` then it will default to the latest release
-#[tokio::main]
 pub async fn init<P: AsRef<Path>, S: AsRef<str>>(
     version: Option<S>,
     loader: Loader,
@@ -73,7 +72,6 @@ pub async fn init<P: AsRef<Path>, S: AsRef<str>>(
 }
 
 /// The `sync` command
-#[tokio::main]
 pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &LocalModsConfig) {
     init_logger();
 
@@ -83,7 +81,9 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &LocalModsConfig) {
 
     // First, use [`sync_file`] to sync all existed mod files
     info!("checking existed mods...");
-    let jar_files = get_jar_files(current_dir);
+    let jar_files = get_jar_files(current_dir)
+        .into_iter()
+        .filter(|entry| !entry.file_name().to_string_lossy().starts_with("_"));
     let mut stream = stream::iter(jar_files)
         .map(|entry| async {
             let filename = entry.file_name();
@@ -167,7 +167,6 @@ pub async fn sync<P: AsRef<Path>>(current_dir: P, config: &LocalModsConfig) {
 }
 
 /// The `update` command
-#[tokio::main]
 pub async fn update(current_dir: impl AsRef<Path>, config: &mut LocalModsConfig) {
     init_logger();
 
@@ -232,7 +231,6 @@ pub async fn update(current_dir: impl AsRef<Path>, config: &mut LocalModsConfig)
 }
 
 /// The `add` command
-#[tokio::main]
 pub async fn add(slugs: Vec<String>, current_dir: impl AsRef<Path>, config: &mut LocalModsConfig) {
     init_logger();
 
@@ -327,7 +325,9 @@ async fn download_modrinth_mod(
 
         span.pb_set_message("downloading...");
         let version_file = version.get_primary_file();
-        download_version_file(version_file, dir).await?;
+        download_version_file(version_file, dir)
+            .await
+            .context("failed to download version file")?;
 
         Ok(())
     }
@@ -390,14 +390,13 @@ async fn sync_file(
 
         span.pb_set_message("calculating sha1 hash...");
         let _path = path.clone();
-        let hash = tokio::task::spawn_blocking(move || get_sha1_hash(_path).unwrap())
-            .await
-            .unwrap();
+        let hash = smol::unblock(move || get_sha1_hash(_path).unwrap()).await;
 
         span.pb_set_message("fetching version...");
         let version = api::modrinth::get_version_from_hash(&hash, HashMethod::Sha1).await;
         if version.is_err() {
-            return Ok(SyncRes::Skipped);
+            remove_file(&path)?;
+            return Ok(SyncRes::Removed(path))
         }
         let version = version.unwrap();
 
@@ -462,9 +461,7 @@ async fn update_mod(
 
         span.pb_set_message("calculating sha1 hash...");
         let _path = path.clone();
-        let hash = tokio::task::spawn_blocking(move || get_sha1_hash(_path).unwrap())
-            .await
-            .unwrap();
+        let hash = smol::unblock(move || get_sha1_hash(_path).unwrap()).await;
 
         let cur_version = api::modrinth::get_version_from_hash(&hash, HashMethod::Sha1).await;
         if cur_version.is_err() {

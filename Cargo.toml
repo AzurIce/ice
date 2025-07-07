@@ -14,20 +14,22 @@ clap = { version = "4.5.40", features = ["derive"] }
 # log = "0.4"
 env_logger = "0.11.8"
 regex = "1.11.1"
-reqwest = { version = "0.12.20", features = ["blocking", "json", "stream"] }
+reqwest = { version = "0.12.22", features = ["json", "stream"] }
 serde_json = "1.0.140"
 chrono = "0.4.41"
 sha = "1.0.3"
 color-print = "0.3.7"
 toml_edit = { version = "0.22.22", features = ["serde"] }
-tokio = { version = "1.45.1", features = ["full"] }
-tokio-stream = "0.1.17"
 futures = "0.3.31"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
-indicatif = "0.17.11"
-tracing-indicatif = "0.3.9"
-anyhow = "1.0.98"
+indicatif = "0.18.0"
+tracing-indicatif = "0.3.11"
+anyhow.workspace = true
+async-compat.workspace = true
+smol.workspace = true
+smol-macros.workspace = true
+macro_rules_attribute.workspace = true
 # indicatif-log-bridge = "0.2.3"
 
 
@@ -35,7 +37,12 @@ anyhow = "1.0.98"
 members = ["packages/*"]
 
 [workspace.dependencies]
-ice-api-tool = {path = "packages/ice-api-tool"}
+ice-api-tool = { path = "packages/ice-api-tool" }
 ice-server = { path = "packages/ice-server" }
 ice-core = { path = "packages/ice-core" }
 ice-util = { path = "packages/ice-util" }
+anyhow = "1.0.98"
+async-compat = "0.2.4"
+smol = "2.0.2"
+smol-macros = "0.1.1"
+macro_rules_attribute = "0.2.2"

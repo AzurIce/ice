@@ -5,16 +5,16 @@
 //! and the related types and functions.
 use std::path::PathBuf;
 
+use ::regex::Regex;
 use ice_util::minecraft::rtext::{Component, ComponentObject};
 use minecraft_rtext::MinecraftRtextPackage;
-use ::regex::Regex;
 use rhai::{
     packages::Package,
     serde::{from_dynamic, to_dynamic},
     CallFnOptions, CustomType, Engine, EvalAltResult, FuncArgs, Scope, TypeBuilder, AST,
 };
 use rhai_fs::FilesystemPackage;
-use tracing::{error, trace};
+use tracing::error;
 
 pub mod minecraft_rtext;
 mod regex;

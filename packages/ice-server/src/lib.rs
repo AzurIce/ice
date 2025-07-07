@@ -11,7 +11,7 @@ use std::{
 use crate::config::Config;
 use command::{bkarch::BkArch, bksnap::BkSnap, Command};
 
-use plugin::{scoreboard::ScoreBoard, Plugin, RhaiPlugin};
+use plugin::{Plugin, RhaiPlugin};
 use regex::Regex;
 use server::Server;
 use tracing::{info, warn};
@@ -59,9 +59,9 @@ pub struct Core {
     commands: HashMap<String, Arc<Mutex<Box<dyn Command + Send + Sync>>>>,
 
     // plugins: Arc<Vec<Arc<Mutex<Box<dyn Plugin + Send>>>>>,
-    pub output_tx: tokio::sync::mpsc::UnboundedSender<String>, // Sender for stdout_loop
-    pub command_tx: mpsc::Sender<String>,                      // Sender for command_hanle_loop
-    pub event_tx: tokio::sync::mpsc::UnboundedSender<Event>,
+    pub output_tx: smol::channel::Sender<String>, // Sender for stdout_loop
+    pub command_tx: mpsc::Sender<String>,         // Sender for command_hanle_loop
+    pub event_tx: smol::channel::Sender<Event>,
 
     pub server: Server,
 }
@@ -73,16 +73,17 @@ impl Core {
         let server_dir = root_dir.join("server");
         let plugins_dir = root_dir.join("plugins");
 
-        let (event_tx, mut event_rx) = tokio::sync::mpsc::unbounded_channel::<Event>();
-        let server = Server::new(config.clone(), event_tx.clone());
+        let (event_tx, event_rx) = smol::channel::unbounded::<Event>();
+        let server = Server::new(server_dir.clone(), config.clone(), event_tx.clone());
 
         // Output
-        let (output_tx, mut output_rx) = tokio::sync::mpsc::unbounded_channel::<String>();
-        tokio::spawn(async move {
-            while let Some(buf) = output_rx.recv().await {
+        let (output_tx, output_rx) = smol::channel::unbounded::<String>();
+        smol::spawn(async move {
+            while let Ok(buf) = output_rx.recv().await {
                 println!("{buf}")
             }
-        });
+        })
+        .detach();
 
         // ? commands and plugins
         let mut commands = HashMap::<String, Arc<Mutex<Box<dyn Command + Send + Sync>>>>::new();
@@ -169,8 +170,8 @@ impl Core {
         let _event_tx = event_tx.clone();
         let _command_tx = command_tx.clone();
         let mut _server = server.clone();
-        tokio::spawn(async move {
-            while let Some(event) = event_rx.recv().await {
+        smol::spawn(async move {
+            while let Ok(event) = event_rx.recv().await {
                 match event.clone() {
                     Event::PluginDelayCall {
                         delay_ms,
@@ -182,13 +183,15 @@ impl Core {
                         //     delay_ms, plugin_id, fn_name
                         // );
                         let _event_tx = _event_tx.clone();
-                        tokio::spawn(async move {
-                            tokio::time::sleep(Duration::from_millis(delay_ms)).await;
+                        smol::spawn(async move {
+                            smol::Timer::after(Duration::from_millis(delay_ms)).await;
                             // info!("delay call {} {} {}", delay_ms, plugin_id, fn_name);
                             _event_tx
                                 .send(Event::PluginCallFn { plugin_id, fn_name })
+                                .await
                                 .unwrap();
-                        });
+                        })
+                        .detach();
                     }
                     Event::ServerDown => {
                         _server.handle_event(event.clone());
@@ -215,7 +218,8 @@ impl Core {
                     plugin.handle_event(_server.clone(), event.clone());
                 }
             }
-        });
+        })
+        .detach();
 
         let mut core = Core {
             config,

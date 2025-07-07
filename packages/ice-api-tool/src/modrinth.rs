@@ -1,5 +1,6 @@
 use std::{fmt::Display, vec};
 
+use anyhow::Context;
 use serde::Serialize;
 use serde_json::json;
 use types::{Loader, Project, Version};
@@ -96,7 +97,8 @@ pub async fn get_latest_version_from_hash<H: AsRef<str>, V: AsRef<str>>(
             "game_versions": [game_version],
         }))
         .send()
-        .await?;
+        .await
+        .context("error getting response")?;
     let version = res.json::<Version>().await?;
     Ok(version)
 }
@@ -144,6 +146,7 @@ impl Display for HashMethod {
 pub mod utils {
     use std::path::Path;
 
+    use anyhow::Context;
     use ice_util::download_from_url;
 
     use super::types::VersionFile;
@@ -158,7 +161,9 @@ pub mod utils {
             return Ok(());
             // return Err("already exists".into());
         }
-        download_from_url(&version_file.url, path, |_| {}).await
+        download_from_url(&version_file.url, path, |_| {})
+            .await
+            .context("failed to download from url")
     }
 }
 
@@ -284,11 +289,13 @@ pub mod types {
 
 #[cfg(test)]
 mod test {
+    use async_compat::Compat;
+    use macro_rules_attribute::apply;
     use serde::Deserialize;
+    use smol_macros::test;
 
     use super::types::*;
     use super::*;
-    use super::{get_project_versions, HashMethod};
 
     fn iris_version() -> Version {
         Version {
@@ -313,7 +320,7 @@ mod test {
         }
     }
 
-    #[tokio::test]
+    #[apply(test!)]
     async fn test_loader() {
         let res = reqwest::get("https://api.modrinth.com/v2/tag/loader")
             .await
@@ -336,7 +343,7 @@ mod test {
         // }
     }
 
-    #[tokio::test]
+    #[apply(test!)]
     async fn test_get_project_versions() {
         let versions = get_project_versions(
             "terralith",
@@ -347,7 +354,7 @@ mod test {
         println!("{versions:?}")
     }
 
-    #[tokio::test]
+    #[apply(test!)]
     async fn test_get_version_from_hash() {
         let version_sha1 =
             get_version_from_hash(&iris_version().files[0].hashes.sha1, HashMethod::Sha1)
@@ -360,22 +367,27 @@ mod test {
         assert_eq!(version_sha1, version_sha512);
     }
 
-    #[tokio::test]
+    #[apply(test!)]
     async fn test_get_latest_version_from_slug() {
         let version = get_latest_version_from_slug("minihud", vec![Loader::Fabric], "1.21.6").await;
         println!("{version:?}");
     }
 
+    // #[apply(test!)]
     #[tokio::test]
     async fn test_get_latest_version_from_hash() {
-        let hashes = &iris_version().files[0].hashes;
+        // Compat::new(async {
+        // let hashes = &iris_version().files[0].hashes;
         let version = get_latest_version_from_hash(
-            &hashes.sha1,
+            // &hashes.sha1,
+            "5cb96cdb2ad2cda38d4fb268e5eae95d00e853c2",
             HashMethod::Sha1,
-            &vec![Loader::Quilt],
-            "1.21",
+            &vec![Loader::Fabric],
+            "1.21.6",
         )
         .await;
         println!("{version:?}");
+        // })
+        // .await
     }
 }

@@ -24,9 +24,12 @@ pub async fn get_latest_version() -> Result<String, Box<dyn Error>> {
 
 #[cfg(test)]
 mod test {
+    use smol_macros::test;
+    use macro_rules_attribute::apply;
+
     use super::*;
 
-    #[tokio::test]
+    #[apply(test)]
     async fn test_get_latest_version() {
         let version = get_latest_version().await.unwrap();
         println!("{version}");

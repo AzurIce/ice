@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::{path::PathBuf, sync::{Arc, Mutex}};
 
 use ::regex::Regex;
 use ice_util::minecraft::rtext::{build_component, Component};
@@ -15,15 +15,17 @@ pub mod regex;
 
 #[derive(Clone)]
 pub struct Server {
+    jar_dir: PathBuf,
     config: Config,
-    event_tx: tokio::sync::mpsc::UnboundedSender<Event>,
+    event_tx: smol::channel::Sender<Event>,
     minecraft_server: Arc<Mutex<Option<MinecraftServer>>>,
     log_filters: Arc<Mutex<Vec<Regex>>>,
 }
 
 impl Server {
-    pub fn new(config: Config, event_tx: tokio::sync::mpsc::UnboundedSender<Event>) -> Self {
+    pub fn new(jar_dir: PathBuf, config: Config, event_tx: smol::channel::Sender<Event>) -> Self {
         Self {
+            jar_dir,
             config,
             event_tx,
             minecraft_server: Arc::new(Mutex::new(None)),
@@ -58,7 +60,8 @@ impl Server {
             Err(format!("server is already running"))
         } else {
             *server = Some(MinecraftServer::run(
-                self.config.clone(),
+                &self.jar_dir,
+                &self.config,
                 self.event_tx.clone(),
             ));
             Ok(())
@@ -67,13 +70,12 @@ impl Server {
 
     /// Call a function in the plugin after a delay
     pub fn delay_call(&self, delay_ms: i64, plugin_id: String, fn_name: String) {
-        self.event_tx
-            .send(Event::PluginDelayCall {
-                delay_ms: delay_ms as u64,
-                plugin_id,
-                fn_name,
-            })
-            .unwrap();
+        smol::block_on(self.event_tx.send(Event::PluginDelayCall {
+            delay_ms: delay_ms as u64,
+            plugin_id,
+            fn_name,
+        }))
+        .unwrap();
     }
 
     /// Get the config of a plugin

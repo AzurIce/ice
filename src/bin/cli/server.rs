@@ -9,7 +9,6 @@ use ice_server::{config::Config, Core};
 use tracing::{info, error, Level};
 use tracing_subscriber::FmtSubscriber;
 
-#[tokio::main]
 pub async fn new<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
     name: S,
     version: Option<V>,
@@ -26,7 +25,6 @@ pub async fn new<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
     init_dir(dir, version, loader);
 }
 
-#[tokio::main]
 pub async fn init<S: AsRef<str>, P: AsRef<Path>>(
     version: Option<S>,
     loader: Loader,
@@ -51,14 +49,13 @@ pub fn install<P: AsRef<Path>>(current_dir: P) {
     }
 }
 
-#[tokio::main]
 pub async fn run<P: AsRef<Path>>(current_dir: P) {
     let current_dir = current_dir.as_ref();
     // a builder for `FmtSubscriber`.
     let subscriber = FmtSubscriber::builder()
         // all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)
         // will be written to stdout.
-        .with_max_level(Level::TRACE)
+        .with_max_level(Level::TRACE).with_env_filter("ice=INFO")
         // completes the builder.
         .finish();
 

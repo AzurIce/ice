@@ -50,12 +50,12 @@ pub enum ModCommands {
 }
 
 impl ModCommands {
-    pub fn exec<P1: AsRef<Path>, P2: AsRef<Path>>(self, current_dir: P1, config_path: P2) {
+    pub async fn exec<P1: AsRef<Path>, P2: AsRef<Path>>(self, current_dir: P1, config_path: P2) {
         let current_dir = current_dir.as_ref();
         let config_path = config_path.as_ref();
 
         if let ModCommands::Init { version, loader } = self {
-            modrinth::init(version, loader, current_dir);
+            modrinth::init(version, loader, current_dir).await;
             return;
         }
 
@@ -64,13 +64,13 @@ impl ModCommands {
 
         match self {
             ModCommands::Sync => {
-                modrinth::sync(current_dir, &config);
+                modrinth::sync(current_dir, &config).await;
             }
             ModCommands::Update => {
-                modrinth::update(current_dir, &mut config);
+                modrinth::update(current_dir, &mut config).await;
             }
             ModCommands::Add { slugs } => {
-                modrinth::add(slugs, current_dir, &mut config);
+                modrinth::add(slugs, current_dir, &mut config).await;
             }
             _ => (),
         }
@@ -103,36 +103,36 @@ pub enum ServerCommands {
 }
 
 impl ServerCommands {
-    pub fn exec<P: AsRef<Path>>(self, current_dir: P) {
+    pub async fn exec<P: AsRef<Path>>(self, current_dir: P) {
         let current_dir = current_dir.as_ref();
         match self {
             ServerCommands::Mod(command) => {
                 let config_path = current_dir.join("Ice.toml");
                 let current_dir = current_dir.join("server").join("mods");
-                command.exec(current_dir, config_path);
+                command.exec(current_dir, config_path).await;
             }
             ServerCommands::New {
                 name,
                 version,
                 loader,
             } => {
-                server::new(name, version, loader, current_dir);
+                server::new(name, version, loader, current_dir).await;
             }
             ServerCommands::Init { version, loader } => {
-                server::init(version, loader, current_dir);
+                server::init(version, loader, current_dir).await;
             }
             ServerCommands::Install => {
                 server::install(current_dir);
             }
             ServerCommands::Run => {
-                server::run(current_dir);
+                server::run(current_dir).await;
             }
         }
     }
 }
 
 impl Cli {
-    pub fn exec(self) {
+    pub async fn exec(self) {
         let current_dir = self
             .working_dir
             .unwrap_or(env::current_dir().expect("failed to get current_dir"));
@@ -140,9 +140,9 @@ impl Cli {
         match self.command {
             Commands::Modrinth(command) => {
                 let config_path = current_dir.join("mods.toml");
-                command.exec(current_dir, config_path);
+                command.exec(current_dir, config_path).await;
             }
-            Commands::Server(command) => command.exec(current_dir),
+            Commands::Server(command) => command.exec(current_dir).await,
         }
     }
 }

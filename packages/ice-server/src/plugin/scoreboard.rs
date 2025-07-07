@@ -14,41 +14,41 @@ pub enum Events {
 
 pub struct ScoreBoard {
     objectives_regex: Regex,
-    event_tx: tokio::sync::mpsc::UnboundedSender<Events>,
+    event_tx: smol::channel::Sender<Events>,
     server: Server,
 }
 
 impl ScoreBoard {
     pub async fn init(server: Server) -> Self {
         // info!("initializing...");
-        let (event_tx, mut event_rx) = tokio::sync::mpsc::unbounded_channel::<Events>();
+        let (event_tx, event_rx) = smol::channel::unbounded::<Events>();
         let objectives = Arc::new(Mutex::new(Vec::new()));
 
         // Send a change event every 10s
         let _event_tx = event_tx.clone();
         let _objectives = objectives.clone();
-        tokio::spawn(async move {
+        smol::spawn(async move {
             let mut index = 0;
             loop {
                 {
                     let _objectives = _objectives.lock().unwrap();
                     if let Some(objective) = _objectives.get(index).cloned() {
-                        _event_tx
-                            .send(Events::ChangeSidebarObjective(objective))
+                        smol::block_on(_event_tx.send(Events::ChangeSidebarObjective(objective)))
                             .unwrap();
                         index = (index + 1) % _objectives.len();
                     } else {
                         index = 0;
                     }
                 }
-                tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
+                smol::Timer::after(std::time::Duration::from_secs(10)).await;
             }
-        });
+        })
+        .detach();
 
         let _server = server.clone();
-        tokio::spawn(async move {
+        smol::spawn(async move {
             loop {
-                if let Some(event) = event_rx.recv().await {
+                if let Ok(event) = event_rx.recv().await {
                     match event {
                         Events::ChangeSidebarObjective(objective) => {
                             info!("Changing scoreboard display objective to {objective}...");
@@ -66,7 +66,8 @@ impl ScoreBoard {
                     }
                 }
             }
-        });
+        })
+        .detach();
 
         let objectives_regex = Regex::new(r"]: There are \d+ objective\(s\): (.*)").unwrap();
         Self {
@@ -92,9 +93,7 @@ impl Plugin for ScoreBoard {
                 .captures_iter(capture.get(1).unwrap().as_str())
                 .map(|cap| cap.get(1).unwrap().as_str().to_string())
                 .collect::<Vec<String>>();
-            self.event_tx
-                .send(Events::UpdatedObjectives(objectives))
-                .unwrap();
+            smol::block_on(self.event_tx.send(Events::UpdatedObjectives(objectives))).unwrap();
         }
     }
 
