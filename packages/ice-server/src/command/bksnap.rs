@@ -74,7 +74,15 @@ pub fn del_snapshot() {
         entries.sort_by_key(|entry| entry.metadata().unwrap().created().unwrap());
         let entries = entries
             .into_iter()
-            .map(|entry| entry.path())
+            .filter_map(|entry| {
+                entry.file_type().ok().and_then(|file_type| {
+                    if file_type.is_dir() {
+                        Some(entry.path())
+                    } else {
+                        None
+                    }
+                })
+            })
             .collect::<Vec<PathBuf>>();
         if let Some(first) = entries.first() {
             println!("[del_snapshop]: Deleting {first:?}...");
