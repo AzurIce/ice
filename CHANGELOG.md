@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-alpha.40](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.39..0.1.0-alpha.40) - 2025-07-11
+
+### <!-- 1 -->🕷️ Bug Fixes
+
+
+- #4 again - ([dbb85a6](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/dbb85a6eae5e6669ead0038e31a63df0f9c05a35))
+
+### <!-- 2 --> Refactor
+
+
+- Replace tokio runtime with smol - ([61f65b9](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/61f65b95be0b0c2484704bb9e4a34edfadc413c9))
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+
+
+- Update flake - ([610e12c](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/commit/610e12cf4566b1065c807c8d424d232062c69a06))
+
 ## [0.1.0-alpha.39](https://github.com/BJTUEventCameraSoftwareGroup/event-cam-software/compare/0.1.0-alpha.38..0.1.0-alpha.39) - 2025-07-06
 
 ### <!-- 0 -->🎈 Features
