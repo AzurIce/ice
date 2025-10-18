@@ -32,6 +32,10 @@ enum Commands {
 
 #[derive(Subcommand)]
 pub enum ModCommands {
+    Check {
+        #[arg(short, long)]
+        version: Option<String>,
+    },
     /// Initialize a mods.toml
     Init {
         #[arg(short, long)]
@@ -41,8 +45,6 @@ pub enum ModCommands {
     },
     /// Sync mods
     Sync,
-    /// Install mods
-    Install,
     /// Update mods
     Update,
     /// Add mod
@@ -72,7 +74,10 @@ impl ModCommands {
             ModCommands::Add { slugs } => {
                 modrinth::add(slugs, current_dir, &mut config).await;
             }
-            _ => (),
+            ModCommands::Check { version } => {
+                modrinth::check(version, current_dir, &config).await;
+            }
+            ModCommands::Init { .. } => (),
         }
     }
 }

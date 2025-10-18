@@ -45,6 +45,59 @@ fn init_logger() {
 }
 
 // MARK: CLI
+pub async fn check(version: Option<String>, current_dir: &Path, config: &LocalModsConfig) {
+    init_logger();
+    let version = version.unwrap_or(config.version.clone());
+    let current_dir = current_dir;
+
+    let loader = ice_core_loader_to_modrinth_loader(config.loader);
+    let mut stream = stream::iter(
+        config
+            .mods
+            .iter()
+            .map(|(slug, toml_mod)| Mod::from((slug.clone(), toml_mod.clone())))
+            .filter_map(|m| {
+                if let Mod::Modrinth(m) = m {
+                    Some(m)
+                } else {
+                    None
+                }
+            }),
+    )
+    .map(|m| async {
+        get_latest_version_from_slug(m.slug.clone(), vec![loader], &version)
+            .await
+            .context("failed to get latest version")
+            .map(|v| (m, v))
+    })
+    .buffer_unordered(5);
+
+    while let Some(res) = stream.next().await {
+        match res {
+            Ok((m, v)) => {
+                if m.version_id() == &v.id {
+                    info!(
+                        "{}",
+                        cformat!("<g>Latest</> {} = {}", m.slug, m.version_number())
+                    );
+                } else {
+                    info!(
+                        "{}",
+                        cformat!(
+                            "<y>Outdated</> {} = {} -> {}",
+                            m.slug,
+                            m.version_number(),
+                            v.version_number
+                        )
+                    );
+                }
+            }
+            Err(err) => {
+                info!("{}", cformat!("<r>Not Found</> {:?}", err));
+            }
+        }
+    }
+}
 
 /// Initialize a `mods.toml` under `current_dir`
 ///
@@ -396,7 +449,7 @@ async fn sync_file(
         let version = api::modrinth::get_version_from_hash(&hash, HashMethod::Sha1).await;
         if version.is_err() {
             remove_file(&path)?;
-            return Ok(SyncRes::Removed(path))
+            return Ok(SyncRes::Removed(path));
         }
         let version = version.unwrap();
 
@@ -526,6 +579,7 @@ fn ice_core_loader_to_modrinth_loader(
     match value {
         ice_core::Loader::Fabric => ice_api_tool::modrinth::types::Loader::Fabric,
         ice_core::Loader::Quilt => ice_api_tool::modrinth::types::Loader::Quilt,
+        ice_core::Loader::Custom => todo!("not supported"),
     }
 }
 
