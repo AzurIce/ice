@@ -14,8 +14,6 @@ pub struct Config {
     #[serde(default)]
     pub properties: HashMap<String, String>,
     #[serde(default)]
-    pub mods: HashMap<String, String>, // slug -> version_number
-    #[serde(default)]
     pub plugins: HashMap<String, PluginConfig>,
 }
 
@@ -35,7 +33,6 @@ impl Config {
             loader,
             jvm_options: String::new(),
             properties: HashMap::new(),
-            mods: HashMap::new(),
             plugins: HashMap::new(),
         }
     }

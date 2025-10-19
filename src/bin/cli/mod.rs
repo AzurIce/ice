@@ -84,9 +84,6 @@ impl ModCommands {
 
 #[derive(Subcommand)]
 pub enum ServerCommands {
-    /// mod command for servers Ice.toml
-    #[command(subcommand)]
-    Mod(ModCommands),
     New {
         name: String,
 
@@ -111,11 +108,6 @@ impl ServerCommands {
     pub async fn exec<P: AsRef<Path>>(self, current_dir: P) {
         let current_dir = current_dir.as_ref();
         match self {
-            ServerCommands::Mod(command) => {
-                let config_path = current_dir.join("Ice.toml");
-                let current_dir = current_dir.join("server").join("mods");
-                command.exec(current_dir, config_path).await;
-            }
             ServerCommands::New {
                 name,
                 version,

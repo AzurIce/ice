@@ -19,7 +19,7 @@ use ice_api_tool::{
 use ice_core::Loader;
 use ice_util::fs::get_sha1_hash;
 use indicatif::ProgressStyle;
-use tracing::{error, info, info_span, Instrument, Span};
+use tracing::{info, info_span, Instrument, Span};
 use tracing_indicatif::{span_ext::IndicatifSpanExt, IndicatifLayer};
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -45,10 +45,9 @@ fn init_logger() {
 }
 
 // MARK: CLI
-pub async fn check(version: Option<String>, current_dir: &Path, config: &LocalModsConfig) {
+pub async fn check(version: Option<String>, _current_dir: &Path, config: &LocalModsConfig) {
     init_logger();
     let version = version.unwrap_or(config.version.clone());
-    let current_dir = current_dir;
 
     let loader = ice_core_loader_to_modrinth_loader(config.loader);
     let mut stream = stream::iter(
@@ -579,7 +578,6 @@ fn ice_core_loader_to_modrinth_loader(
     match value {
         ice_core::Loader::Fabric => ice_api_tool::modrinth::types::Loader::Fabric,
         ice_core::Loader::Quilt => ice_api_tool::modrinth::types::Loader::Quilt,
-        ice_core::Loader::Custom => todo!("not supported"),
     }
 }
 

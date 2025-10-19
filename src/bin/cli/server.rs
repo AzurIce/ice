@@ -67,9 +67,6 @@ pub async fn run<P: AsRef<Path>>(current_dir: P) {
         return;
     }
 
-    info!("checking mods...");
-    // TODO: check mods
-
     info!("the core is running...");
     Core::run(config, current_dir).await;
 }
