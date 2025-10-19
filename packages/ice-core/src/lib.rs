@@ -1,15 +1,133 @@
 use std::{
     error::Error,
     fmt::{self, Display, Formatter},
-    fs,
-    path::Path,
+    path::{Path, PathBuf},
     process::Command,
 };
 
+use anyhow::Context;
+use async_compat::Compat;
 use ice_api_tool as api;
 use ice_util::{download_from_url, get_url_filename};
 use log::info;
 use serde::{Deserialize, Serialize};
+
+pub trait ServerLoader {
+    fn get_latest_installer_url(game_version: &str) -> Result<String, anyhow::Error>;
+    fn download_installer<P: AsRef<Path>>(
+        current_dir: P,
+        game_version: &str,
+    ) -> Result<PathBuf, anyhow::Error> {
+        let current_dir = current_dir.as_ref();
+        let ice_dir = current_dir.join(".ice");
+        if !ice_dir.exists() || ice_dir.is_file() {
+            std::fs::create_dir_all(&ice_dir).context("failed to create ice dir")?;
+        }
+
+        let url = Self::get_latest_installer_url(game_version)
+            .context("failed to get latest installer url")?;
+
+        let filename = get_url_filename(url.as_str()).unwrap_or("loader-installer");
+        let installer_path = ice_dir.join(filename);
+        smol::block_on(Compat::new(download_from_url(
+            url.as_str(),
+            &installer_path,
+            |_| {},
+        )))?;
+        Ok(installer_path)
+    }
+    fn install_cmd(current_dir: &Path, installer_path: &Path, game_version: &str) -> Command;
+    fn install<P: AsRef<Path>, S: AsRef<str>>(
+        current_dir: P,
+        game_version: S,
+    ) -> Result<(), anyhow::Error> {
+        let current_dir = current_dir.as_ref();
+        let game_version = game_version.as_ref();
+
+        let installer_path = Self::download_installer(current_dir, game_version)
+            .context("failed to download installer")?;
+
+        // Install
+        info!("installing server...");
+        if !current_dir.join("server").exists() {
+            std::fs::create_dir(current_dir.join("server"))
+                .expect("failed to create server folder");
+        }
+
+        let success = Self::install_cmd(current_dir, &installer_path, game_version)
+            .status()?
+            .success();
+        if !success {
+            panic!("failed to install server")
+        }
+
+        Ok(())
+    }
+}
+
+// MARK: QuiltLoader
+pub struct QuiltLoader;
+
+impl ServerLoader for QuiltLoader {
+    fn get_latest_installer_url(_game_version: &str) -> Result<String, anyhow::Error> {
+        smol::block_on(Compat::new(api::quilt::get_latest_installer_url()))
+    }
+    fn install_cmd(current_dir: &Path, installer_path: &Path, game_version: &str) -> Command {
+        let mut cmd = Command::new("java");
+        cmd.current_dir(current_dir).args([
+            "-jar",
+            installer_path.as_os_str().to_str().unwrap(),
+            "install",
+            "server",
+            game_version,
+            "--download-server",
+        ]);
+        cmd
+    }
+}
+
+// MARK: FabricLoader
+pub struct FabricLoader;
+
+impl ServerLoader for FabricLoader {
+    fn get_latest_installer_url(_game_version: &str) -> Result<String, anyhow::Error> {
+        smol::block_on(Compat::new(api::fabric::get_latest_installer_url()))
+    }
+    fn install_cmd(current_dir: &Path, installer_path: &Path, game_version: &str) -> Command {
+        let mut cmd = Command::new("java");
+        cmd.current_dir(current_dir).args([
+            "-jar",
+            installer_path.as_os_str().to_str().unwrap(),
+            "server",
+            "-dir",
+            "server",
+            "-mcversion",
+            game_version,
+            "-downloadMinecraft",
+        ]);
+        cmd
+    }
+}
+
+// MARK: NeoForgeLoader
+pub struct NeoForgeLoader;
+
+impl ServerLoader for NeoForgeLoader {
+    fn get_latest_installer_url(game_version: &str) -> Result<String, anyhow::Error> {
+        smol::block_on(Compat::new(api::neoforge::get_latest_installer_url(
+            game_version,
+        )))
+    }
+    fn install_cmd(current_dir: &Path, installer_path: &Path, _game_version: &str) -> Command {
+        let mut cmd = Command::new("java");
+        cmd.current_dir(current_dir.join("server")).args([
+            "-jar",
+            installer_path.as_os_str().to_str().unwrap(),
+            "--installServer",
+        ]);
+        cmd
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
@@ -80,57 +198,20 @@ impl Loader {
             return Err("not implemented".into());
         }
 
-        // Download installer
-        let ice_dir = current_dir.join(".ice");
-        fs::create_dir_all(&ice_dir).unwrap();
-        let url = smol::block_on(async {
-            Ok::<String, Box<dyn Error>>(match self {
-                Loader::Fabric => api::fabric::get_latest_installer_url().await?,
-                Loader::Quilt => reqwest::get(
-                    "https://quiltmc.org/api/v1/download-latest-installer/java-universal",
-                )
-                .await?
-                .url()
-                .as_str()
-                .to_string(),
-            })
-        })?;
-        let filename = get_url_filename(url.as_str()).unwrap_or("quilt-installer");
-        let installer_path = ice_dir.join(filename);
-        smol::block_on(download_from_url(url.as_str(), &installer_path, |_| {}))?;
-
-        // Install
-        info!("installing server({self})...");
-        if !current_dir.join("server").exists() {
-            std::fs::create_dir(current_dir.join("server"))
-                .expect("failed to create server folder");
-        }
-        let args: &[&str] = match self {
-            Loader::Fabric => &[
-                "server",
-                "-dir",
-                "server",
-                "-mcversion",
-                game_version,
-                "-downloadMinecraft",
-            ],
-            Loader::Quilt => &["install", "server", game_version, "--download-server"],
-        };
-        let success = Command::new("java")
-            .current_dir(current_dir)
-            .args(
-                ["-jar", installer_path.as_os_str().to_str().unwrap()]
-                    .iter()
-                    .chain(args.into_iter()),
-            )
-            .status()?
-            .success();
-        if !success {
-            panic!("failed to install server")
-        }
+        match self {
+            Loader::Fabric => FabricLoader::install(current_dir, game_version),
+            Loader::Quilt => QuiltLoader::install(current_dir, game_version),
+        }?;
 
         Ok(())
     }
+}
+
+pub fn install_server<L: ServerLoader>(
+    current_dir: impl AsRef<Path>,
+    game_version: impl AsRef<str>,
+) -> Result<(), anyhow::Error> {
+    L::install(current_dir, game_version)
 }
 
 #[cfg(test)]
@@ -139,27 +220,17 @@ mod test {
 
     use super::*;
 
+    fn test_install_server<L: ServerLoader>(path: impl AsRef<Path>, game_version: impl AsRef<str>) {
+        L::install(path, game_version).unwrap();
+    }
+
     #[test]
     fn test_install() {
         let root = env!("CARGO_MANIFEST_DIR");
         let test_dir = PathBuf::from(root).join("test");
 
-        let test_loader_install = |loader: Loader| {
-            let loader_test_dir = test_dir.join(loader.to_string());
-            println!("testing {loader} in {loader_test_dir:?}...");
-            if !loader_test_dir.exists() {
-                println!("dir not exist, creating...");
-                std::fs::create_dir_all(&loader_test_dir).unwrap();
-            }
-
-            println!("installing loader...");
-            loader
-                .install(&loader_test_dir, "1.20.4")
-                .expect("failed to init server jar");
-            println!("done.")
-        };
-
-        // test_loader_install(Loader::Fabric);
-        test_loader_install(Loader::Quilt);
+        test_install_server::<QuiltLoader>(test_dir.join("quilt"), "1.21.1");
+        test_install_server::<FabricLoader>(test_dir.join("fabric"), "1.21.1");
+        test_install_server::<NeoForgeLoader>(test_dir.join("neoforge"), "1.21.1");
     }
 }

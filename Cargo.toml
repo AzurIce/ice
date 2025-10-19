@@ -1,48 +1,49 @@
 [package]
 name = "ice"
 version = "0.1.0-alpha.40"
-edition = "2021"
+edition.workspace = true
 
 [dependencies]
 ice-api-tool.workspace = true
 ice-server.workspace = true
 ice-core = { workspace = true, features = ["clap"] }
 ice-util.workspace = true
-toml = "0.8.23"
-serde = { version = "1.0.219", features = ["derive"] }
-clap = { version = "4.5.40", features = ["derive"] }
-# log = "0.4"
+toml = "0.9.8"
+serde = { version = "1.0.228", features = ["derive"] }
+clap = { version = "4.5.49", features = ["derive"] }
 env_logger = "0.11.8"
-regex = "1.11.1"
-reqwest = { version = "0.12.22", features = ["json", "stream"] }
-serde_json = "1.0.140"
-chrono = "0.4.41"
+regex = "1.12.2"
+reqwest = { version = "0.12.24", features = ["json", "stream"] }
+serde_json = "1.0.145"
+chrono = "0.4.42"
 sha = "1.0.3"
 color-print = "0.3.7"
-toml_edit = { version = "0.22.22", features = ["serde"] }
+toml_edit = { version = "0.23.7", features = ["serde"] }
 futures = "0.3.31"
 tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 indicatif = "0.18.0"
-tracing-indicatif = "0.3.11"
+tracing-indicatif = "0.3.13"
 anyhow.workspace = true
 async-compat.workspace = true
 smol.workspace = true
 smol-macros.workspace = true
 macro_rules_attribute.workspace = true
-# indicatif-log-bridge = "0.2.3"
 
 
 [workspace]
 members = ["packages/*"]
+
+[workspace.package]
+edition = "2024"
 
 [workspace.dependencies]
 ice-api-tool = { path = "packages/ice-api-tool" }
 ice-server = { path = "packages/ice-server" }
 ice-core = { path = "packages/ice-core" }
 ice-util = { path = "packages/ice-util" }
-anyhow = "1.0.98"
-async-compat = "0.2.4"
+anyhow = "1.0.100"
+async-compat = "0.2.5"
 smol = "2.0.2"
 smol-macros = "0.1.1"
 macro_rules_attribute = "0.2.2"

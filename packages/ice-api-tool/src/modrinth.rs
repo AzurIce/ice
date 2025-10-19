@@ -289,7 +289,6 @@ pub mod types {
 
 #[cfg(test)]
 mod test {
-    use async_compat::Compat;
     use macro_rules_attribute::apply;
     use serde::Deserialize;
     use smol_macros::test;
