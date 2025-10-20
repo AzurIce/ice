@@ -17,13 +17,14 @@ pub async fn get_latest_installer_url(game_version: &str) -> Result<String, anyh
                 game_version
             ));
         }
-        format!("{}.{}", splits[1], splits[2])
+        format!("{}.{}.", splits[1], splits[2])
     };
 
     // Build request with filter param
     let mut url = Url::parse(MAIN_ENDPOINT)?;
     url.query_pairs_mut()
         .append_pair("filter", &mc_version_prefix);
+    // println!("{url:?}");
 
     // Define response type
     #[derive(Debug, serde::Deserialize)]
@@ -53,6 +54,8 @@ pub async fn get_latest_installer_url(game_version: &str) -> Result<String, anyh
     .ok_or(anyhow::anyhow!(
         "No NeoForge version found for MC version {game_version}"
     ))?;
+
+    // println!("{:?}", version);
 
     // https://maven.neoforged.net/releases/net/neoforged/neoforge/[VERSION]/neoforge-[VERSION]-installer.jar
     let url = format!("{DOWNLOAD_URL}/{NEOFORGE_GAV}/{version}/neoforge-{version}-installer.jar",);
