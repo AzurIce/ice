@@ -29,6 +29,9 @@ pub trait ServerLoaderTrait {
 
         let filename = get_url_filename(url.as_str()).unwrap_or("loader-installer");
         let installer_path = ice_dir.join(filename);
+        if installer_path.exists() {
+            return Ok(installer_path);
+        }
         smol::block_on(Compat::new(download_from_url(
             url.as_str(),
             &installer_path,
@@ -183,10 +186,6 @@ impl ServerLoader {
     ) -> Result<(), Box<dyn Error>> {
         let current_dir = current_dir.as_ref();
         let game_version = game_version.as_ref();
-
-        if !matches!(self, ServerLoader::Fabric | ServerLoader::Quilt) {
-            return Err("not implemented".into());
-        }
 
         match self {
             ServerLoader::Fabric => FabricLoader::install(current_dir, game_version),
