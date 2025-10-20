@@ -1,5 +1,8 @@
 use std::{
-    io::{self, BufRead, Write}, path::{Path}, process::{ChildStdin, Command, Stdio}, thread
+    io::{self, BufRead, Write},
+    path::Path,
+    process::{ChildStdin, Command, Stdio},
+    thread,
 };
 
 use super::regex::{done_regex, player_regex};
@@ -15,18 +18,19 @@ pub struct MinecraftServer {
 }
 
 impl MinecraftServer {
-    pub fn run(jar_dir: &Path, config: &Config, event_tx: smol::channel::Sender<Event>) -> Self {
+    pub fn run(server_dir: &Path, config: &Config, event_tx: smol::channel::Sender<Event>) -> Self {
+        info!("Server::run");
 
-        info!("Server::start");
-
-        let mut command = Command::new("java");
-        let mut args = config.jvm_options.split(' ').collect::<Vec<&str>>();
+        let mut args = config.command.split(' ').collect::<Vec<&str>>();
         args.retain(|s| !s.is_empty());
-        args.extend(["-jar", config.loader.launch_filename_str(), "--nogui"]);
-        info!("Running command: java {}", args.join(" "));
+        args.extend(["--nogui"]);
+        info!("command: {}", args.join(" "));
 
-        command.current_dir(jar_dir);
-        command.args(args);
+        let mut command = Command::new(args[0]);
+        command.current_dir(server_dir);
+        if args.len() > 1 {
+            command.args(&args[1..]);
+        }
 
         let mut child = command
             .stdin(Stdio::piped())
@@ -35,7 +39,6 @@ impl MinecraftServer {
             .expect("failed to spawn");
 
         let child_in = child.stdin.take().expect("Failed to open child's stdin");
-
         let child_out = child.stdout.take().expect("Failed to open child's stdout");
         thread::spawn(move || {
             let mut reader = io::BufReader::new(child_out);
@@ -66,8 +69,7 @@ impl MinecraftServer {
                         } else if done_regex().is_match(&buf) {
                             smol::block_on(event_tx.send(Event::ServerDone)).unwrap();
                         }
-                        smol::block_on(event_tx
-                            .send(Event::ServerLog(buf.clone())))
+                        smol::block_on(event_tx.send(Event::ServerLog(buf.clone())))
                             .expect("Failed to send to event_tx");
                         // println!("{buf}");
                     }
@@ -75,9 +77,7 @@ impl MinecraftServer {
             }
             info!("server end");
             child.wait().expect("failed to wait");
-            smol::block_on(event_tx
-                .send(Event::ServerDown))
-                .expect("failed to send to event_tx");
+            smol::block_on(event_tx.send(Event::ServerDown)).expect("failed to send to event_tx");
         });
 
         Self { child_in }

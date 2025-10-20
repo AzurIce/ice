@@ -3,7 +3,7 @@ mod server;
 
 use clap::{Parser, Subcommand};
 use ice::config::LocalModsConfig;
-use ice_core::Loader;
+use ice_core::ServerLoader;
 use std::{
     env,
     path::{Path, PathBuf},
@@ -22,9 +22,9 @@ pub(crate) struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Modrinth related commands
+    /// Mod related commands
     #[command(subcommand)]
-    Modrinth(ModCommands),
+    Mod(ModCommands),
     /// Server related commands
     #[command(subcommand)]
     Server(ServerCommands),
@@ -40,8 +40,8 @@ pub enum ModCommands {
     Init {
         #[arg(short, long)]
         version: Option<String>,
-        #[arg(short, long, default_value_t = Loader::Quilt, value_enum)]
-        loader: Loader,
+        #[arg(short, long, default_value_t = ServerLoader::Quilt, value_enum)]
+        loader: ServerLoader,
     },
     /// Sync mods
     Sync,
@@ -84,23 +84,20 @@ impl ModCommands {
 
 #[derive(Subcommand)]
 pub enum ServerCommands {
+    /// Install a server with loader
     New {
         name: String,
-
+    },
+    /// Init a Ice.toml
+    Init,
+    /// Install a server with loader
+    Install {
         #[arg(short, long)]
         version: Option<String>,
 
-        #[arg(short, long, default_value_t = Loader::Quilt, value_enum)]
-        loader: Loader,
+        #[arg(short, long, default_value_t = ServerLoader::Quilt, value_enum)]
+        loader: ServerLoader,
     },
-    Init {
-        #[arg(short, long)]
-        version: Option<String>,
-
-        #[arg(short, long, default_value_t = Loader::Quilt, value_enum)]
-        loader: Loader,
-    },
-    Install,
     Run,
 }
 
@@ -108,18 +105,14 @@ impl ServerCommands {
     pub async fn exec<P: AsRef<Path>>(self, current_dir: P) {
         let current_dir = current_dir.as_ref();
         match self {
-            ServerCommands::New {
-                name,
-                version,
-                loader,
-            } => {
-                server::new(name, version, loader, current_dir).await;
+            ServerCommands::New { name } => {
+                server::new(name, current_dir).await;
             }
-            ServerCommands::Init { version, loader } => {
-                server::init(version, loader, current_dir).await;
+            ServerCommands::Init => {
+                server::init(current_dir).await;
             }
-            ServerCommands::Install => {
-                server::install(current_dir);
+            ServerCommands::Install { version, loader } => {
+                server::install(current_dir, version, loader);
             }
             ServerCommands::Run => {
                 server::run(current_dir).await;
@@ -135,7 +128,7 @@ impl Cli {
             .unwrap_or(env::current_dir().expect("failed to get current_dir"));
 
         match self.command {
-            Commands::Modrinth(command) => {
+            Commands::Mod(command) => {
                 let config_path = current_dir.join("mods.toml");
                 command.exec(current_dir, config_path).await;
             }

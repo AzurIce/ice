@@ -16,7 +16,7 @@ use ice_api_tool::{
     self as api,
     modrinth::{get_latest_version_from_slug, utils::download_version_file, HashMethod},
 };
-use ice_core::Loader;
+use ice_core::ServerLoader;
 use ice_util::fs::get_sha1_hash;
 use indicatif::ProgressStyle;
 use tracing::{info, info_span, Instrument, Span};
@@ -103,7 +103,7 @@ pub async fn check(version: Option<String>, _current_dir: &Path, config: &LocalM
 /// If `version` is `None` then it will default to the latest release
 pub async fn init<P: AsRef<Path>, S: AsRef<str>>(
     version: Option<S>,
-    loader: Loader,
+    loader: ServerLoader,
     current_dir: P,
 ) {
     let version = version.map(|s| s.as_ref().to_string());
@@ -573,11 +573,12 @@ enum AddRes {
 }
 
 fn ice_core_loader_to_modrinth_loader(
-    value: ice_core::Loader,
+    value: ice_core::ServerLoader,
 ) -> ice_api_tool::modrinth::types::Loader {
     match value {
-        ice_core::Loader::Fabric => ice_api_tool::modrinth::types::Loader::Fabric,
-        ice_core::Loader::Quilt => ice_api_tool::modrinth::types::Loader::Quilt,
+        ice_core::ServerLoader::Fabric => ice_api_tool::modrinth::types::Loader::Fabric,
+        ice_core::ServerLoader::Quilt => ice_api_tool::modrinth::types::Loader::Quilt,
+        ice_core::ServerLoader::NeoForge => ice_api_tool::modrinth::types::Loader::NeoForge,
     }
 }
 

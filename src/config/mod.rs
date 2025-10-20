@@ -7,7 +7,7 @@ use std::{
     str::FromStr,
 };
 
-use ice_core::Loader;
+use ice_core::ServerLoader;
 use serde::{Deserialize, Serialize};
 
 use crate::core::{Mod, ModrinthMod};
@@ -15,7 +15,7 @@ use crate::core::{Mod, ModrinthMod};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TomlModsManifest {
     pub version: String,
-    pub loader: Loader,
+    pub loader: ServerLoader,
     pub mods: BTreeMap<String, TomlMod>,
 
     #[serde(skip_serializing)]
@@ -73,7 +73,7 @@ pub struct ModsConfig {
 }
 
 impl ModsConfig {
-    pub fn new(version: String, loader: Loader) -> Self {
+    pub fn new(version: String, loader: ServerLoader) -> Self {
         let mut document = toml_edit::DocumentMut::new();
         document["version"] = toml_edit::value(version.clone());
         document["loader"] = toml_edit::value(loader.to_string());
@@ -173,7 +173,7 @@ impl DerefMut for LocalModsConfig {
 }
 
 impl LocalModsConfig {
-    pub fn new(version: String, loader: Loader, path: impl AsRef<Path>) -> Self {
+    pub fn new(version: String, loader: ServerLoader, path: impl AsRef<Path>) -> Self {
         let path = path.as_ref().to_path_buf();
         let inner = ModsConfig::new(version, loader);
         LocalModsConfig { inner, path }
@@ -202,7 +202,7 @@ mod test {
     #[test]
     fn foo() {
         let mut config =
-            LocalModsConfig::new("1.21.6".to_string(), Loader::Fabric, "H:/_mc/ice-test");
+            LocalModsConfig::new("1.21.6".to_string(), ServerLoader::Fabric, "H:/_mc/ice-test");
         // let config = config.inner;
         // println!("{:?}", config);
         // println!("{:?}", config.to_string());

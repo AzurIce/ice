@@ -2,7 +2,7 @@ use std::path::Path;
 
 use color_print::{cprint, cprintln};
 use ice_api_tool::modrinth::{utils::download_version_file, *};
-use ice_core::Loader;
+use ice_core::ServerLoader;
 use ice_util::fs::get_sha1_hash;
 
 /// Download the latest version of `slug` to `mod_dir`
@@ -10,7 +10,7 @@ use ice_util::fs::get_sha1_hash;
 /// the downloaded version is satisfied to `loaders` and `game_version`
 pub async fn download_latest_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
     slug: S,
-    loader: Loader,
+    loader: ServerLoader,
     game_version: V,
     dir: P,
 ) -> Result<(), anyhow::Error> {
@@ -26,7 +26,7 @@ pub async fn download_latest_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
 pub async fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
     slug: S,
     version_number: S,
-    loader: Loader,
+    loader: ServerLoader,
     game_version: S,
     dir: P,
 ) -> Result<(), anyhow::Error> {
@@ -65,7 +65,7 @@ pub async fn download_mod<S: AsRef<str>, P: AsRef<Path>>(
 /// use the latest version satisfies to `loader` and `game_version`
 pub async fn add_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
     slug: S,
-    loader: Loader,
+    loader: ServerLoader,
     game_version: V,
     dir: P,
 ) -> Result<(String, String), anyhow::Error> {
@@ -84,7 +84,7 @@ pub async fn add_mod<S: AsRef<str>, V: AsRef<str>, P: AsRef<Path>>(
 /// if success return the new version_number
 pub async fn update_mod<P: AsRef<Path>, S: AsRef<str>>(
     path: P,
-    loader: Loader,
+    loader: ServerLoader,
     game_version: S,
 ) -> Result<(String, String), anyhow::Error> {
     let path = path.as_ref();

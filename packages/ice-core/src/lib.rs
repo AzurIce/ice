@@ -12,7 +12,7 @@ use ice_util::{download_from_url, get_url_filename};
 use log::info;
 use serde::{Deserialize, Serialize};
 
-pub trait ServerLoader {
+pub trait ServerLoaderTrait {
     fn get_latest_installer_url(game_version: &str) -> Result<String, anyhow::Error>;
     fn download_installer<P: AsRef<Path>>(
         current_dir: P,
@@ -68,7 +68,7 @@ pub trait ServerLoader {
 // MARK: QuiltLoader
 pub struct QuiltLoader;
 
-impl ServerLoader for QuiltLoader {
+impl ServerLoaderTrait for QuiltLoader {
     fn get_latest_installer_url(_game_version: &str) -> Result<String, anyhow::Error> {
         smol::block_on(Compat::new(api::quilt::get_latest_installer_url()))
     }
@@ -89,7 +89,7 @@ impl ServerLoader for QuiltLoader {
 // MARK: FabricLoader
 pub struct FabricLoader;
 
-impl ServerLoader for FabricLoader {
+impl ServerLoaderTrait for FabricLoader {
     fn get_latest_installer_url(_game_version: &str) -> Result<String, anyhow::Error> {
         smol::block_on(Compat::new(api::fabric::get_latest_installer_url()))
     }
@@ -112,7 +112,7 @@ impl ServerLoader for FabricLoader {
 // MARK: NeoForgeLoader
 pub struct NeoForgeLoader;
 
-impl ServerLoader for NeoForgeLoader {
+impl ServerLoaderTrait for NeoForgeLoader {
     fn get_latest_installer_url(game_version: &str) -> Result<String, anyhow::Error> {
         smol::block_on(Compat::new(api::neoforge::get_latest_installer_url(
             game_version,
@@ -132,60 +132,50 @@ impl ServerLoader for NeoForgeLoader {
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 #[serde(rename_all = "lowercase")]
-pub enum Loader {
+pub enum ServerLoader {
     Quilt,
     Fabric,
+    NeoForge,
 }
 
-impl Loader {
+impl ServerLoader {
     pub fn to_compatible_loaders(&self) -> Vec<ice_api_tool::modrinth::types::Loader> {
         use ice_api_tool::modrinth::types::Loader as ModrinthLoader;
 
         match self {
-            Loader::Fabric => vec![ModrinthLoader::Fabric],
-            Loader::Quilt => vec![ModrinthLoader::Fabric, ModrinthLoader::Quilt],
+            ServerLoader::Fabric => vec![ModrinthLoader::Fabric],
+            ServerLoader::Quilt => vec![ModrinthLoader::Fabric, ModrinthLoader::Quilt],
+            ServerLoader::NeoForge => vec![ModrinthLoader::NeoForge],
         }
     }
 }
 
 mod convert {
-    use super::Loader;
+    use super::ServerLoader;
     use ice_api_tool::modrinth::types::Loader as ModrinthLoader;
 
-    impl Into<ModrinthLoader> for Loader {
+    impl Into<ModrinthLoader> for ServerLoader {
         fn into(self) -> ice_api_tool::modrinth::types::Loader {
             match self {
-                Loader::Fabric => ModrinthLoader::Fabric,
-                Loader::Quilt => ModrinthLoader::Quilt,
+                ServerLoader::Fabric => ModrinthLoader::Fabric,
+                ServerLoader::Quilt => ModrinthLoader::Quilt,
+                ServerLoader::NeoForge => ModrinthLoader::NeoForge,
             }
         }
     }
 }
 
-impl Display for Loader {
+impl Display for ServerLoader {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
             Self::Quilt => "quilt",
             Self::Fabric => "fabric",
+            Self::NeoForge => "neoforge",
         })
     }
 }
 
-impl Loader {
-    pub fn launch_filename_str(&self) -> &str {
-        match self {
-            Loader::Fabric => "fabric-server-launch.jar",
-            Loader::Quilt => "quilt-server-launch.jar",
-        }
-    }
-    pub fn installed<P: AsRef<Path>>(&self, current_dir: P) -> bool {
-        let current_dir = current_dir.as_ref();
-        let server_dir = current_dir.join("server");
-
-        server_dir.join("server.jar").exists()
-            && server_dir.join(self.launch_filename_str()).exists()
-    }
-
+impl ServerLoader {
     pub fn install<P: AsRef<Path>, S: AsRef<str>>(
         &self,
         current_dir: P,
@@ -194,20 +184,21 @@ impl Loader {
         let current_dir = current_dir.as_ref();
         let game_version = game_version.as_ref();
 
-        if !matches!(self, Loader::Fabric | Loader::Quilt) {
+        if !matches!(self, ServerLoader::Fabric | ServerLoader::Quilt) {
             return Err("not implemented".into());
         }
 
         match self {
-            Loader::Fabric => FabricLoader::install(current_dir, game_version),
-            Loader::Quilt => QuiltLoader::install(current_dir, game_version),
+            ServerLoader::Fabric => FabricLoader::install(current_dir, game_version),
+            ServerLoader::Quilt => QuiltLoader::install(current_dir, game_version),
+            ServerLoader::NeoForge => NeoForgeLoader::install(current_dir, game_version),
         }?;
 
         Ok(())
     }
 }
 
-pub fn install_server<L: ServerLoader>(
+pub fn install_server<L: ServerLoaderTrait>(
     current_dir: impl AsRef<Path>,
     game_version: impl AsRef<str>,
 ) -> Result<(), anyhow::Error> {
@@ -220,7 +211,10 @@ mod test {
 
     use super::*;
 
-    fn test_install_server<L: ServerLoader>(path: impl AsRef<Path>, game_version: impl AsRef<str>) {
+    fn test_install_server<L: ServerLoaderTrait>(
+        path: impl AsRef<Path>,
+        game_version: impl AsRef<str>,
+    ) {
         L::install(path, game_version).unwrap();
     }
 
